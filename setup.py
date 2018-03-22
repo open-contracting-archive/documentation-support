@@ -55,11 +55,4 @@ jsonschema_text = ocds_documentation_support:jsonschema_extract
 
         'transifex-client',
     ],
-    dependency_links=[
-      'git+https://github.com/open-contracting/standard_theme.git@open_contracting#egg=standard_theme-0.0.0',
-      'git+https://github.com/open-contracting/ocds_sphinx_directives.git@41cb588bc2e1e7c929e3afbb8253dd7f87758831#egg=ocds_sphinx_directives-0.0.0',  # noqa: E501
-      'git+https://github.com/jpmckinney/sphinxcontrib-jsonschema.git@9c26c6da2b4091f0306c1bd2e5e4baed891157b1#egg=sphinxcontrib-jsonschema-0.9.4',  # noqa: E501
-      'git+https://github.com/OpenDataServices/sphinxcontrib-opendataservices.git@fab0ff0167d32ec243d42f272e0e50766299c078#egg=sphinxcontrib-opendataservices-0.0.0',  # noqa: E501
-      'git+https://github.com/rtfd/recommonmark.git@81d7c6f7b37981ac22571dd91a7cc9d24c3e66a1#egg=recommonmark-0.4.0',
-    ]
 )
