@@ -50,6 +50,7 @@ jsonschema_text = ocds_documentation_support:jsonschema_extract
 
         # Utils
 
+        'json-merge-patch',
         'transifex-client',
     ],
 )
