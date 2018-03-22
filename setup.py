@@ -39,7 +39,7 @@ jsonschema_text = ocds_documentation_support:jsonschema_extract
           'jsonpointer==1.10',
           'jsonref==0.1',
           'recommonmark==0.4.0',  # see below
-            'CommonMark==0.7.3',
+            'CommonMark<0.6',
         'ocds_sphinx_directives==0.0.0',  # see below
         'sphinxcontrib-opendataservices==0.0.0',  # see below
         'standard_theme==0.0.0',  # see below
