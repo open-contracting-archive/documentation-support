@@ -331,6 +331,8 @@ def apply_extensions(basedir, extension_registry_git_ref, profile_slug, profile_
     # Write the two files.
     with open(relative_path('{}-release-schema.json'.format(profile_slug)), 'w') as f:
         json.dump(schema, f, indent=2, separators=(',', ': '))
+        f.write('\n')
 
     with open(relative_path('{}-extension.json'.format(profile_slug)), 'w') as f:
         f.write(json.dumps(profile_extension, indent=2, separators=(',', ': ')).replace('"REPLACE_WITH_NULL"', 'null'))
+        f.write('\n')
