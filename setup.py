@@ -35,14 +35,11 @@ jsonschema_text = ocds_documentation_support:jsonschema_extract
             'Pygments==2.2.0',
             'requests==2.18.1',
             'snowballstemmer==1.2.1',
-        'sphinxcontrib-jsonschema==0.9.4',  # see below
+        # 'sphinxcontrib-jsonschema==0.9.3',  # use forked version
           'jsonpointer==1.10',
           'jsonref==0.1',
-          'recommonmark==0.4.0',  # see below
+          # 'recommonmark==0.4.0',  # use unreleased version
             'CommonMark<0.6',
-        'ocds_sphinx_directives==0.0.0',  # see below
-        'sphinxcontrib-opendataservices==0.0.0',  # see below
-        'standard_theme==0.0.0',  # see below
 
         # Tests
 
