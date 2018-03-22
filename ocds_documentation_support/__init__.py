@@ -255,19 +255,6 @@ def apply_extensions(basedir, extension_registry_git_ref, profile_slug, profile_
     # Codelists with the same name should be identical across extensions.
     codelists_seen = {}
 
-    # Start clean.
-    paths = [
-        relative_path(compiled_codelists, '*.csv'),
-        relative_path('..', 'docs', 'extensions', '*.md'),
-        relative_path('..', 'docs', 'extensions', 'codelists' '*.csv'),
-        relative_path('{}-extension.json'.format(profile_slug)),
-        relative_path('{}-release-schema.json'.format(profile_slug)),
-    ]
-    for path in paths:
-        for filename in glob.glob(path):
-            if os.path.basename(filename) not in ('index.md', 'milestones.md'):
-                os.remove(filename)
-
     # Copy the base codelists to the compiled codelists, and add an Extension column.
     for filename in glob.glob(relative_path('base-codelists', '*.csv')):
         basename = os.path.basename(filename)
