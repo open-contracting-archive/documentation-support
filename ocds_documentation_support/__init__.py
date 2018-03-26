@@ -16,6 +16,7 @@ import requests
 def codelists_extract(fileobj, keywords, comment_tags, options):
     """
     Yields each header, and the Title, Description and Extension values of a codelist CSV file.
+
     Babel extractor used in setup.py
     """
     reader = csv.DictReader(StringIO(fileobj.read().decode()))
@@ -32,6 +33,7 @@ def codelists_extract(fileobj, keywords, comment_tags, options):
 def jsonschema_extract(fileobj, keywords, comment_tags, options):
     """
     Yields the "title" and "description" values of a JSON Schema file.
+
     Babel extractor used in setup.py
     """
     def gather_text(data, pointer=''):
@@ -52,7 +54,9 @@ def jsonschema_extract(fileobj, keywords, comment_tags, options):
 def translate_codelists(domain, sourcedir, builddir, localedir, language):
     """
     Writes files, translating each header and the `Title`, `Description` and `Extension` values of codelist CSV files.
+
     These files are typically referenced by `csv-table-no-translate` directives.
+
     Args:
         domain: The gettext domain.
         sourcedir: The path to the directory containing the codelist CSV files.
@@ -87,7 +91,9 @@ def translate_codelists(domain, sourcedir, builddir, localedir, language):
 def translate_schema(domain, filenames, sourcedir, builddir, localedir, language):
     """
     Writes files, translating the `title` and `description` values of JSON Schema files.
+
     These files are typically referenced by `jsonschema` directives.
+
     Args:
         domain: The gettext domain.
         filenames: A list of JSON Schema filenames to translate.
@@ -137,7 +143,8 @@ def apply_extensions(basedir, extension_registry_git_ref, profile_slug, profile_
       - If it is a new codelist, writes it to compiledCodelists, with the same changes as above
       - If it modifies a base codelist in compiledCodelists, adds any new rows with the same changes as above
 
-    Lastly, it writes the merged schema and extension to schema/{slug}-release-schema.json and schema/{}-extension.json
+    Lastly, it writes the merged schema to schema/{slug}-release-schema.json and merged extension to
+    schema/{slug}-extension.json
     """
     def relative_path(*components):
         """
@@ -238,7 +245,7 @@ def apply_extensions(basedir, extension_registry_git_ref, profile_slug, profile_
 
         write_csv_file(path, pluck_fieldnames(fieldnames, basename), rows)
 
-    # This script compiles codelists into `compiledCodelists`. The other codelist directories are:
+    # This method compiles codelists into `compiledCodelists`. FYI, the other codelist directories are:
     #
     # * `codelists`: The profile's original codelists
     # * `schema/base-codelists`: The standard's original codelists
