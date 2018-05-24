@@ -3,11 +3,6 @@ from setuptools import setup, find_packages
 setup(  # noqa: E131
     name='ocds-documentation-support',
     version='0.0.0',
-    author='James McKinney',
-    author_email='james@slashpoundbang.com',
-    url='https://github.com/open-contracting/documentation-support',
-    platforms=['any'],
-    license='Apache',
     packages=find_packages(),
     entry_points='''
 [babel.extractors]
