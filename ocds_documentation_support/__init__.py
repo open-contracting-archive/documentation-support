@@ -311,6 +311,9 @@ def apply_extensions(basedir, extension_registry_git_ref, profile_slug, profile_
                     with open(relative_path('..', 'docs', 'extensions', 'codelists', basename), 'wb') as f:
                         f.write(content)
 
+                    with open(relative_path('..','consolidatedExtension','codelists', basename), 'wb') as f:
+                        f.write(content)
+
                     print('    Processing {}'.format(basename))
                     process_codelist(basename, content, extension['name']['en'])
         else:
@@ -336,6 +339,9 @@ def apply_extensions(basedir, extension_registry_git_ref, profile_slug, profile_
                 raise Exception('codelist {} is different across extensions'.format(basename))
             codelists_seen[basename] = content
             with open(relative_path('..', 'docs', 'extensions', 'codelists', basename), 'wb') as f:
+                f.write(content)
+
+            with open(relative_path('..','consolidatedExtension','codelists', basename), 'wb') as f:
                 f.write(content)
 
             print('Processing {}'.format(basename))
