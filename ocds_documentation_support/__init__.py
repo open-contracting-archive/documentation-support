@@ -277,20 +277,25 @@ def apply_extensions(basedir, profile_extension_id, profile_extensions):
         if row['Id'] == profile_extension_id:
             continue
 
-        # If the extension is part of the profile, merge the patch and write the readme.
-        if row['Id'] in profile_extensions and row['Version'] == profile_extensions[row['Id']]:
-            print('Merging {}'.format(row['Id']))
-            response = requests.get(row['Base URL'] + 'release-schema.json')
-            readme = requests.get(row['Base URL'] + 'README.md').text
-            json_merge_patch.merge(schema, response.json())
-            json_merge_patch.merge(profile_extension, replace_nulls(response.text))
-            with open(relative_path('..', 'docs', 'extensions', '{}.md'.format(row['Id'])), 'w') as f:
-                f.write(readme)
-        else:
-            print('... skipping {}'.format(row['Id']))
+        if row['Id'] not in profile_extensions or row['Version'] != profile_extensions[row['Id']]:
+            print('... skipping {} {}'.format(row['Id'], row['Version']))
             continue
 
-        parts = row['Base URL'].rsplit('/', 3)
+        # The extension is part of the profile:
+        print('Merging {}'.format(row['Id']))
+
+        # Merge the patch.
+        response = requests.get(row['Base URL'] + 'release-schema.json')
+        json_merge_patch.merge(schema, response.json())
+        json_merge_patch.merge(profile_extension, replace_nulls(response.text))
+
+        # Write the readme.
+        readme = requests.get(row['Base URL'] + 'README.md').text
+        with open(relative_path('..', 'docs', 'extensions', '{}.md'.format(row['Id'])), 'w') as f:
+            f.write(readme)
+
+        # Process the codelists.
+        extension_json = requests.get(row['Base URL'] + 'extension.json').json()
         response = requests.get(row['Download URL'], allow_redirects=True, stream=True)
         if response.ok:
             zipfile = ZipFile(BytesIO(response.content))
@@ -307,7 +312,7 @@ def apply_extensions(basedir, profile_extension_id, profile_extensions):
                         f.write(content)
 
                     print('    Processing {}'.format(basename))
-                    process_codelist(basename, content, extension['name']['en'])
+                    process_codelist(basename, content, extension_json['name']['en'])
         else:
             print('ERROR: Could not find release ZIP for {}'.format(row['Id']))
 
