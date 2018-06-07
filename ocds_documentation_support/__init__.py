@@ -332,6 +332,12 @@ def apply_extensions(basedir, extension_registry_git_ref, profile_slug, profile_
             basename = os.path.basename(filename)
             content = f.read()
 
+            if basename in codelists_seen and codelists_seen[basename] != content:
+                raise Exception('codelist {} is different across extensions'.format(basename))
+            codelists_seen[basename] = content
+            with open(relative_path('..', 'docs', 'extensions', 'codelists', basename), 'wb') as f:
+                f.write(content)
+
             print('Processing {}'.format(basename))
             process_codelist(basename, content, 'Public Private Partnership')
 
