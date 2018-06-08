@@ -128,7 +128,7 @@ def translate_schema(domain, filenames, sourcedir, builddir, localedir, language
             json.dump(data, w, indent=2, separators=(',', ': '), ensure_ascii=False)
 
 
-def apply_extensions(basedir, profile_extension_id, profile_extensions):
+def apply_extensions(basedir, profile_identifier, extension_versions):
     """
     Pulls extensions into a profile. First, it:
 
@@ -274,10 +274,10 @@ def apply_extensions(basedir, profile_extension_id, profile_extensions):
     reader = csv.DictReader(StringIO(requests.get(url).text))
     for row in reader:
         # Skip this profile, as we process it locally.
-        if row['Id'] == profile_extension_id:
+        if row['Id'] == profile_identifier:
             continue
 
-        if row['Id'] not in profile_extensions or row['Version'] != profile_extensions[row['Id']]:
+        if row['Id'] not in extension_versions or row['Version'] != extension_versions[row['Id']]:
             print('... skipping {} {}'.format(row['Id'], row['Version']))
             continue
 
@@ -317,14 +317,14 @@ def apply_extensions(basedir, profile_extension_id, profile_extensions):
             print('ERROR: Could not find release ZIP for {}'.format(row['Id']))
 
     # Process this profile.
-    print('Merging {}'.format(profile_extension_id))
+    print('Merging {}'.format(profile_identifier))
     with open(relative_path('..', 'release-schema.json')) as f:
         content = f.read()
         json_merge_patch.merge(schema, json.loads(content, object_pairs_hook=OrderedDict))
         json_merge_patch.merge(profile_extension, replace_nulls(content))
 
     with open(relative_path('..', 'README.md')) as f:
-        with open(relative_path('..', 'docs', 'extensions', '{}.md'.format(profile_extension_id)), 'w') as g:
+        with open(relative_path('..', 'docs', 'extensions', '{}.md'.format(profile_identifier)), 'w') as g:
             g.write(f.read())
 
     for filename in glob.glob(relative_path('..', 'codelists', '*.csv')):
@@ -336,10 +336,10 @@ def apply_extensions(basedir, profile_extension_id, profile_extensions):
             process_codelist(basename, content, 'Public Private Partnership')
 
     # Write the two files.
-    with open(relative_path('{}-release-schema.json'.format(profile_extension_id)), 'w') as f:
+    with open(relative_path('{}-release-schema.json'.format(profile_identifier)), 'w') as f:
         json.dump(schema, f, indent=2, separators=(',', ': '))
         f.write('\n')
 
-    with open(relative_path('{}-extension.json'.format(profile_extension_id)), 'w') as f:
+    with open(relative_path('{}-extension.json'.format(profile_identifier)), 'w') as f:
         f.write(json.dumps(profile_extension, indent=2, separators=(',', ': ')).replace('"REPLACE_WITH_NULL"', 'null'))
         f.write('\n')
