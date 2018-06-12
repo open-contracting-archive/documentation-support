@@ -11,6 +11,7 @@ from zipfile import ZipFile
 
 import json_merge_patch
 import requests
+from ocdsextensionregistry import ExtensionRegistry
 
 
 def codelists_extract(fileobj, keywords, comment_tags, options):
@@ -271,32 +272,31 @@ def apply_extensions(basedir, profile_identifier, extension_versions):
 
     # Process extensions in this profile.
     url = 'https://raw.githubusercontent.com/open-contracting/extension_registry/master/extension_versions.csv'
-    reader = csv.DictReader(StringIO(requests.get(url).text))
-    for row in reader:
+    registry = ExtensionRegistry(url)
+    for extension in registry:
         # Skip this profile, as we process it locally.
-        if row['Id'] == profile_identifier:
+        if extension.id == profile_identifier:
             continue
 
-        if row['Id'] not in extension_versions or row['Version'] != extension_versions[row['Id']]:
-            print('... skipping {} {}'.format(row['Id'], row['Version']))
+        if extension.id not in extension_versions or extension.version != extension_versions[extension.id]:
+            print('... skipping {} {}'.format(extension.id, extension.version))
             continue
 
         # The extension is part of the profile:
-        print('Merging {}'.format(row['Id']))
+        print('Merging {}'.format(extension.id))
 
         # Merge the patch.
-        response = requests.get(row['Base URL'] + 'release-schema.json')
+        response = requests.get(extension.base_url + 'release-schema.json')
         json_merge_patch.merge(schema, response.json())
         json_merge_patch.merge(profile_extension, replace_nulls(response.text))
 
         # Write the readme.
-        readme = requests.get(row['Base URL'] + 'README.md').text
-        with open(relative_path('..', 'docs', 'extensions', '{}.md'.format(row['Id'])), 'w') as f:
+        readme = requests.get(extension.base_url + 'README.md').text
+        with open(relative_path('..', 'docs', 'extensions', '{}.md'.format(extension.id)), 'w') as f:
             f.write(readme)
 
         # Process the codelists.
-        extension_json = requests.get(row['Base URL'] + 'extension.json').json()
-        response = requests.get(row['Download URL'], allow_redirects=True, stream=True)
+        response = requests.get(extension.download_url, allow_redirects=True, stream=True)
         if response.ok:
             zipfile = ZipFile(BytesIO(response.content))
             for f in zipfile.filelist:
@@ -312,9 +312,9 @@ def apply_extensions(basedir, profile_identifier, extension_versions):
                         f.write(content)
 
                     print('    Processing {}'.format(basename))
-                    process_codelist(basename, content, extension_json['name']['en'])
+                    process_codelist(basename, content, extension.metadata['name']['en'])
         else:
-            print('ERROR: Could not find release ZIP for {}'.format(row['Id']))
+            print('ERROR: Could not find release ZIP for {}'.format(extension.id))
 
     # Process this profile.
     print('Merging {}'.format(profile_identifier))
