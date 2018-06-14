@@ -139,12 +139,12 @@ def apply_extensions(basedir, extension_registry_git_ref, profile_slug, profile_
 
     - Writes its README.md to docs/extensions/{slug}.md
     - Merges its release-schema.json with the base schema and an empty extension
-    - Writes its codelists to docs/extensions/codelists and consolidatedExtension/codelists and then, for each codelist:
+    - Writes its codelists to docs/extensions/codelists and schema/consolidatedExtension/codelists and then, for each codelist:
       - If it is a new codelist, writes it to compiledCodelists, with the same changes as above
       - If it modifies a base codelist in compiledCodelists, adds any new rows with the same changes as above
 
     Lastly, it writes the merged schema to schema/{slug}-release-schema.json and merged extension to
-    consolidatedExtension/release-schema.json
+    schema/consolidatedExtension/release-schema.json
     """
     def relative_path(*components):
         """
@@ -308,11 +308,14 @@ def apply_extensions(basedir, extension_registry_git_ref, profile_slug, profile_
                     if basename in codelists_seen and codelists_seen[basename] != content:
                         raise Exception('codelist {} is different across extensions'.format(basename))
                     codelists_seen[basename] = content
-                    with open(relative_path('..', 'docs', 'extensions', 'codelists', basename), 'wb') as f:
-                        f.write(content)
 
-                    with open(relative_path('..','consolidatedExtension','codelists', basename), 'wb') as f:
-                        f.write(content)
+                    #special case since the documentType.csv in PPP profile is already compiled
+                    if basename != "+documentType.csv" and basename != "-documentType.csv":
+                        with open(relative_path('..', 'docs', 'extensions', 'codelists', basename), 'wb') as f:
+                            f.write(content)
+
+                        with open(relative_path('..','schema','consolidatedExtension','codelists', basename), 'wb') as f:
+                            f.write(content)
 
                     print('    Processing {}'.format(basename))
                     process_codelist(basename, content, extension['name']['en'])
@@ -341,7 +344,7 @@ def apply_extensions(basedir, extension_registry_git_ref, profile_slug, profile_
             with open(relative_path('..', 'docs', 'extensions', 'codelists', basename), 'wb') as f:
                 f.write(content)
 
-            with open(relative_path('..','consolidatedExtension','codelists', basename), 'wb') as f:
+            with open(relative_path('..','schema','consolidatedExtension','codelists', basename), 'wb') as f:
                 f.write(content)
 
             print('Processing {}'.format(basename))
@@ -352,6 +355,6 @@ def apply_extensions(basedir, extension_registry_git_ref, profile_slug, profile_
         json.dump(schema, f, indent=2, separators=(',', ': '))
         f.write('\n')
 
-    with open(relative_path('..','consolidatedExtension','release-schema.json'), 'w') as f:
+    with open(relative_path('..','schema','consolidatedExtension','release-schema.json'), 'w') as f:
         f.write(json.dumps(profile_extension, indent=2, separators=(',', ': ')).replace('"REPLACE_WITH_NULL"', 'null'))
         f.write('\n')
