@@ -11,6 +11,7 @@ from zipfile import ZipFile
 
 import json_merge_patch
 import requests
+from ocdsextensionregistry import ExtensionRegistry
 
 
 def codelists_extract(fileobj, keywords, comment_tags, options):
@@ -128,7 +129,7 @@ def translate_schema(domain, filenames, sourcedir, builddir, localedir, language
             json.dump(data, w, indent=2, separators=(',', ': '), ensure_ascii=False)
 
 
-def apply_extensions(basedir, extension_registry_git_ref, profile_slug, profile_extensions):
+def apply_extensions(basedir, profile_identifier, extension_versions):
     """
     Pulls extensions into a profile. First, it:
 
@@ -137,14 +138,14 @@ def apply_extensions(basedir, extension_registry_git_ref, profile_slug, profile_
 
     Then, for each extension and the profile itself, it:
 
-    - Writes its README.md to docs/extensions/{slug}.md
+    - Writes its README.md to docs/extensions/{id}.md
     - Merges its release-schema.json with the base schema and an empty extension
     - Writes its codelists to docs/extensions/codelists and schema/consolidatedExtension/codelists and then,
     for each codelist:
       - If it is a new codelist, writes it to compiledCodelists, with the same changes as above
       - If it modifies a base codelist in compiledCodelists, adds any new rows with the same changes as above
 
-    Lastly, it writes the merged schema to schema/{slug}-release-schema.json and merged extension to
+    Lastly, it writes the merged schema to schema/{id}-release-schema.json and merged extension to
     schema/consolidatedExtension/release-schema.json
     """
     def relative_path(*components):
@@ -270,34 +271,33 @@ def apply_extensions(basedir, extension_registry_git_ref, profile_slug, profile_
         shutil.copy(filename, path)
         append_extension(path, 'OCDS Core', basename)
 
-    url = 'http://standard.open-contracting.org/extension_registry/{}/extensions.json'.format(extension_registry_git_ref)  # noqa
-    extension_json = requests.get(url).json()
-
     # Process extensions in this profile.
-    for extension in extension_json['extensions']:
-        slug = extension['slug']
-
+    url = 'https://raw.githubusercontent.com/open-contracting/extension_registry/master/extension_versions.csv'
+    registry = ExtensionRegistry(url)
+    for extension in registry:
         # Skip this profile, as we process it locally.
-        if slug == profile_slug:
+        if extension.id == profile_identifier:
             continue
 
-        # If the extension is part of the profile, merge the patch and write the readme.
-        if slug in profile_extensions:
-            print('Merging {}'.format(slug))
-            url = extension['url'].rstrip('/') + '/'
-            response = requests.get(url + 'release-schema.json')
-            readme = requests.get(url + 'README.md').text
-            json_merge_patch.merge(schema, response.json())
-            json_merge_patch.merge(profile_extension, replace_nulls(response.text))
-            with open(relative_path('..', 'docs', 'extensions', '{}.md'.format(slug)), 'w') as f:
-                f.write(readme)
-        else:
-            print('... skipping {}'.format(slug))
+        if extension.id not in extension_versions or extension.version != extension_versions[extension.id]:
+            print('... skipping {} {}'.format(extension.id, extension.version))
             continue
 
-        parts = extension['url'].rsplit('/', 3)
-        url = 'https://github.com/open-contracting/{}/archive/{}.zip'.format(parts[-3], parts[-2])
-        response = requests.get(url, stream=True)
+        # The extension is part of the profile:
+        print('Merging {}'.format(extension.id))
+
+        # Merge the patch.
+        response = requests.get(extension.base_url + 'release-schema.json')
+        json_merge_patch.merge(schema, response.json())
+        json_merge_patch.merge(profile_extension, replace_nulls(response.text))
+
+        # Write the readme.
+        readme = requests.get(extension.base_url + 'README.md').text
+        with open(relative_path('..', 'docs', 'extensions', '{}.md'.format(extension.id)), 'w') as f:
+            f.write(readme)
+
+        # Process the codelists.
+        response = requests.get(extension.download_url, allow_redirects=True, stream=True)
         if response.ok:
             zipfile = ZipFile(BytesIO(response.content))
             for f in zipfile.filelist:
@@ -320,19 +320,19 @@ def apply_extensions(basedir, extension_registry_git_ref, profile_slug, profile_
                             f.write(content)
 
                     print('    Processing {}'.format(basename))
-                    process_codelist(basename, content, extension['name']['en'])
+                    process_codelist(basename, content, extension.metadata['name']['en'])
         else:
-            print('ERROR: Could not find release ZIP for {}'.format(slug))
+            print('ERROR: Could not find release ZIP for {}'.format(extension.id))
 
     # Process this profile.
-    print('Merging {}'.format(profile_slug))
+    print('Merging {}'.format(profile_identifier))
     with open(relative_path('..', 'release-schema.json')) as f:
         content = f.read()
         json_merge_patch.merge(schema, json.loads(content, object_pairs_hook=OrderedDict))
         json_merge_patch.merge(profile_extension, replace_nulls(content))
 
     with open(relative_path('..', 'README.md')) as f:
-        with open(relative_path('..', 'docs', 'extensions', '{}.md'.format(profile_slug)), 'w') as g:
+        with open(relative_path('..', 'docs', 'extensions', '{}.md'.format(profile_identifier)), 'w') as g:
             g.write(f.read())
 
     for filename in glob.glob(relative_path('..', 'codelists', '*.csv')):
@@ -353,7 +353,7 @@ def apply_extensions(basedir, extension_registry_git_ref, profile_slug, profile_
             process_codelist(basename, content, 'Public Private Partnership')
 
     # Write the two files.
-    with open(relative_path('{}-release-schema.json'.format(profile_slug)), 'w') as f:
+    with open(relative_path('{}-release-schema.json'.format(profile_identifier)), 'w') as f:
         json.dump(schema, f, indent=2, separators=(',', ': '))
         f.write('\n')
 

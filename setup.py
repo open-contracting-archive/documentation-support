@@ -45,6 +45,7 @@ jsonschema_text = ocds_documentation_support:jsonschema_extract
 
         # Utils
 
+        'ocdsextensionregistry>=0.0.2',
         'json-merge-patch',
         'transifex-client',
     ],
