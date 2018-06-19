@@ -158,7 +158,7 @@ def apply_extensions(basedir, profile_identifier, extension_versions):
         """
         Replaces `null` with sentinel values, to preserve the null'ing of fields by extensions in the final patch.
         """
-        return json.loads(re.sub(r':\s*null\b', ': "REPLACE_WITH_NULL"', content))
+        return json.loads(re.sub(r':\s*null\b', ': "REPLACE_WITH_NULL"', content), object_pairs_hook=OrderedDict)
 
     def pluck_fieldnames(fieldnames, basename):
         """
