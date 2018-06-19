@@ -140,12 +140,13 @@ def apply_extensions(basedir, profile_identifier, extension_versions):
 
     - Writes its README.md to docs/extensions/{id}.md
     - Merges its release-schema.json with the base schema and an empty extension
-    - Writes its codelists to docs/extensions/codelists and then, for each codelist:
+    - Writes its codelists to docs/extensions/codelists and schema/consolidatedExtension/codelists and then,
+    for each codelist:
       - If it is a new codelist, writes it to compiledCodelists, with the same changes as above
       - If it modifies a base codelist in compiledCodelists, adds any new rows with the same changes as above
 
     Lastly, it writes the merged schema to schema/{id}-release-schema.json and merged extension to
-    schema/{id}-extension.json
+    schema/consolidatedExtension/release-schema.json
     """
     def relative_path(*components):
         """
@@ -157,7 +158,7 @@ def apply_extensions(basedir, profile_identifier, extension_versions):
         """
         Replaces `null` with sentinel values, to preserve the null'ing of fields by extensions in the final patch.
         """
-        return json.loads(re.sub(r':\s*null\b', ': "REPLACE_WITH_NULL"', content))
+        return json.loads(re.sub(r':\s*null\b', ': "REPLACE_WITH_NULL"', content), object_pairs_hook=OrderedDict)
 
     def pluck_fieldnames(fieldnames, basename):
         """
@@ -308,8 +309,15 @@ def apply_extensions(basedir, profile_identifier, extension_versions):
                     if basename in codelists_seen and codelists_seen[basename] != content:
                         raise Exception('codelist {} is different across extensions'.format(basename))
                     codelists_seen[basename] = content
-                    with open(relative_path('..', 'docs', 'extensions', 'codelists', basename), 'wb') as f:
-                        f.write(content)
+
+                    # special case since the documentType.csv in PPP profile is already compiled
+                    if basename != "+documentType.csv" and basename != "-documentType.csv":
+                        with open(relative_path('..', 'docs', 'extensions', 'codelists', basename), 'wb') as f:
+                            f.write(content)
+
+                        with open(relative_path('..', 'schema',
+                                                'consolidatedExtension', 'codelists', basename), 'wb') as f:
+                            f.write(content)
 
                     print('    Processing {}'.format(basename))
                     process_codelist(basename, content, extension.metadata['name']['en'])
@@ -332,6 +340,15 @@ def apply_extensions(basedir, profile_identifier, extension_versions):
             basename = os.path.basename(filename)
             content = f.read()
 
+            if basename in codelists_seen and codelists_seen[basename] != content:
+                raise Exception('codelist {} is different across extensions'.format(basename))
+            codelists_seen[basename] = content
+            with open(relative_path('..', 'docs', 'extensions', 'codelists', basename), 'wb') as f:
+                f.write(content)
+
+            with open(relative_path('..', 'schema', 'consolidatedExtension', 'codelists', basename), 'wb') as f:
+                f.write(content)
+
             print('Processing {}'.format(basename))
             process_codelist(basename, content, 'Public Private Partnership')
 
@@ -340,6 +357,6 @@ def apply_extensions(basedir, profile_identifier, extension_versions):
         json.dump(schema, f, indent=2, separators=(',', ': '))
         f.write('\n')
 
-    with open(relative_path('{}-extension.json'.format(profile_identifier)), 'w') as f:
+    with open(relative_path('..', 'schema', 'consolidatedExtension', 'release-schema.json'), 'w') as f:
         f.write(json.dumps(profile_extension, indent=2, separators=(',', ': ')).replace('"REPLACE_WITH_NULL"', 'null'))
         f.write('\n')
