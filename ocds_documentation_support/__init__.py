@@ -47,7 +47,7 @@ def jsonschema_extract(fileobj, keywords, comment_tags, options):
                     yield value, '{}/{}'.format(pointer, key)
                 yield from gather_text(value, pointer='{}/{}'.format(pointer, key))
 
-    data = json.loads(fileobj.read().decode())
+    data = json.loads(fileobj.read().decode(), object_pairs_hook=OrderedDict)
     for text, pointer in gather_text(data):
         yield 1, '', text.strip(), [pointer]
 
@@ -157,7 +157,7 @@ def apply_extensions(basedir, profile_identifier, extension_versions):
         """
         Replaces `null` with sentinel values, to preserve the null'ing of fields by extensions in the final patch.
         """
-        return json.loads(re.sub(r':\s*null\b', ': "REPLACE_WITH_NULL"', content))
+        return json.loads(re.sub(r':\s*null\b', ': "REPLACE_WITH_NULL"', content), object_pairs_hook=OrderedDict)
 
     def pluck_fieldnames(fieldnames, basename):
         """
