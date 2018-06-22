@@ -8,7 +8,7 @@ codelist = b"""Code,Title,Description,Extension,Category
   bar  ,       ,  bzz  ,  zzz  ,  foo  
   baz  ,  bzz  ,       ,  foo  ,  bar  
   bzz  ,  zzz  ,  foo  ,       ,  baz  
-"""
+"""  # noqa
 
 schema = b"""{
     "title": {
@@ -25,6 +25,7 @@ schema = b"""{
         "description": "    "
     }
 }"""
+
 
 def assert_result(filename, content, method, expected):
     with TemporaryDirectory() as d:
