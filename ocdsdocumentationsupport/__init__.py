@@ -1,5 +1,4 @@
 import csv
-import gettext
 import glob
 import json
 import os
