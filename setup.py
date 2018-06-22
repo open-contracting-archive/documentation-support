@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(  # noqa: E131
-    name='ocds-documentation-support',
+    name='ocdsdocumentationsupport',
     version='0.0.0',
     packages=find_packages(),
     entry_points='''
