@@ -2,10 +2,13 @@ import csv
 import gettext
 import glob
 import json
+import logging.config
 import os
 from collections import OrderedDict
 
 from ocdsdocumentationsupport import TRANSLATABLE_CODELIST_HEADERS, TRANSLATABLE_SCHEMA_KEYWORDS
+
+logger = logging.getLogger('ocdsdocumentationsupport')
 
 
 def translate_codelists(domain, sourcedir, builddir, localedir, language):
@@ -21,7 +24,8 @@ def translate_codelists(domain, sourcedir, builddir, localedir, language):
         localedir: The path to the `locale` directory.
         language: A two-letter lowercase ISO369-1 code or BCP47 language tag.
     """
-    print('Translating codelists in {} to language {}'.format(sourcedir, language))
+    logger.info('Translating codelists to {} using "{}" domain, from {} to {}'.format(
+        language, domain, sourcedir, builddir))
 
     if not os.path.exists(builddir):
         os.makedirs(builddir)
@@ -30,6 +34,7 @@ def translate_codelists(domain, sourcedir, builddir, localedir, language):
 
     for file in glob.glob(os.path.join(sourcedir, '*.csv')):
         with open(file) as r, open(os.path.join(builddir, os.path.basename(file)), 'w') as w:
+            # This should roughly match the logic of the `codelists_extract` Babel extractor.
             reader = csv.DictReader(r)
             fieldnames = [translator.gettext(fieldname) for fieldname in reader.fieldnames]
 
@@ -39,6 +44,7 @@ def translate_codelists(domain, sourcedir, builddir, localedir, language):
             for row in reader:
                 new_row = {}
                 for key, value in row.items():
+                    value = value.strip()
                     if key in TRANSLATABLE_CODELIST_HEADERS and value:
                         value = translator.gettext(value)
                     new_row[translator.gettext(key)] = value
@@ -59,21 +65,25 @@ def translate_schema(domain, filenames, sourcedir, builddir, localedir, language
         localedir: The path to the `locale` directory.
         language: A two-letter lowercase ISO369-1 code or BCP47 language tag.
     """
-    print('Translating schema in {} to language {}'.format(sourcedir, language))
+    logger.info('Translating schema to {} using "{}" domain, from {} to {}'.format(
+        language, domain, sourcedir, builddir))
 
     if not os.path.exists(builddir):
         os.makedirs(builddir)
 
     version = os.environ.get('TRAVIS_BRANCH', 'latest')
 
+    # This should roughly match the logic of the `jsonschema_extract` Babel extractor.
     def translate_data(data):
         if isinstance(data, list):
             for item in data:
                 translate_data(item)
         elif isinstance(data, dict):
             for key, value in data.items():
-                if key in TRANSLATABLE_SCHEMA_KEYWORDS and isinstance(value, str):
-                    data[key] = translator.gettext(value).replace('{{version}}', version).replace('{{lang}}', language)
+                if isinstance(value, str):
+                    value = value.strip()
+                    if key in TRANSLATABLE_SCHEMA_KEYWORDS and value:
+                        data[key] = translator.gettext(value).replace('{{version}}', version).replace('{{lang}}', language)  # noqa: E501
                 translate_data(value)
 
     translator = gettext.translation(domain, localedir, languages=[language], fallback=language == 'en')
