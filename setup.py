@@ -6,8 +6,8 @@ setup(  # noqa: E131
     packages=find_packages(),
     entry_points='''
 [babel.extractors]
-codelists_text = ocds_documentation_support:codelists_extract
-jsonschema_text = ocds_documentation_support:jsonschema_extract
+codelists_text = ocds_documentation_support.babel_extractors:codelists_extract
+jsonschema_text = ocds_documentation_support.babel_extractors:jsonschema_extract
 ''',
     # The dependency trees are determined by `pipdeptree -fl`
     install_requires=[
@@ -49,4 +49,11 @@ jsonschema_text = ocds_documentation_support:jsonschema_extract
         'json-merge-patch',
         'transifex-client',
     ],
+    extras_require={
+        'test': [
+            'coveralls',
+            'pytest',
+            'pytest-cov',
+        ],
+    },
 )
