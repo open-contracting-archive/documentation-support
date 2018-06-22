@@ -9,6 +9,8 @@ import json
 import os
 from io import StringIO
 
+from ocdsdocumentationsupport import TRANSLATABLE_CODELIST_HEADERS, TRANSLATABLE_SCHEMA_KEYWORDS
+
 
 def codelists_extract(fileobj, keywords, comment_tags, options):
     """
@@ -25,7 +27,7 @@ def codelists_extract(fileobj, keywords, comment_tags, options):
         for row_number, row in enumerate(reader, 1):
             for key, value in row.items():
                 value = value.strip()
-                if key in ('Title', 'Description', 'Extension') and value:
+                if key in TRANSLATABLE_CODELIST_HEADERS and value:
                     yield row_number, '', value, [key]
 
 
@@ -39,10 +41,12 @@ def jsonschema_extract(fileobj, keywords, comment_tags, options):
                 yield from gather_text(item, pointer='{}/{}'.format(pointer, index))
         elif isinstance(data, dict):
             for key, value in data.items():
-                if key in ('title', 'description') and isinstance(value, str):
-                    yield value, '{}/{}'.format(pointer, key)
+                if isinstance(value, str):
+                    value = value.strip()
+                    if key in TRANSLATABLE_SCHEMA_KEYWORDS and value:
+                        yield value, '{}/{}'.format(pointer, key)
                 yield from gather_text(value, pointer='{}/{}'.format(pointer, key))
 
     data = json.loads(fileobj.read().decode())
     for text, pointer in gather_text(data):
-        yield 1, '', text.strip(), [pointer]
+        yield 1, '', text, [pointer]

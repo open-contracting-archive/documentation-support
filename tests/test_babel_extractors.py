@@ -21,7 +21,8 @@ schema = b"""{
         }]
     },
     "description": {
-        "title": "  zzz  "
+        "title": "  zzz  ",
+        "description": "    "
     }
 }"""
 
