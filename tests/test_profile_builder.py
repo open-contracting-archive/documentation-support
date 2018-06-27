@@ -82,7 +82,7 @@ def test_patched_release_schema():
     assert 'buyer' not in result['properties']
 
 
-def test_codelist_patches(caplog):
+def test_codelist_patches_with_options(caplog):
     # Note: We can't yet test, using real data, whether an error is raised if a codelist replacement either doesn't
     # contain added codes, or contains removed codes. If we were to use test data, we could create a test registry
     # and test extensions, or mock HTTP requests…. For now, additions were tested manually. We also can't yet test
@@ -98,7 +98,7 @@ def test_codelist_patches(caplog):
             ('charges', 'master'),
             ('tariffs', 'master'),
         ]))
-        result = builder.codelist_patches()
+        result = builder.codelist_patches(add_extension=True, remove_deprecated=True)
 
         assert len(result) == 9
         assert list(result.keys()) == [
@@ -128,6 +128,45 @@ def test_codelist_patches(caplog):
         assert caplog.records[-1].message == 'documentType.csv has the codes added by +documentType.csv, ignoring +documentType.csv'  # noqa
 
 
+def test_codelist_patches_without_options(caplog):
+    with caplog.at_level(logging.INFO):
+        builder = ProfileBuilder('1__1__3', OrderedDict([
+            ('ppp', 'v1.1.3'),
+            ('enquiries', 'v1.1.3'),
+            ('charges', 'master'),
+            ('tariffs', 'master'),
+        ]))
+        result = builder.codelist_patches()
+
+        assert len(result) == 9
+        assert list(result.keys()) == [
+            '+milestoneType.csv',
+            '+partyRole.csv',
+            '-partyRole.csv',
+            '+releaseTag.csv',
+            'initiationType.csv',
+            'documentType.csv',
+        ] + new_extension_codelists
+
+        # Doesn't remove deprecated codes (there are none in extensions to test against, yet).
+
+        # Doesn't set Extension value and preserves other values.
+        assert len(result['initiationType.csv'][-1]) == 3
+        assert result['initiationType.csv'][-1]['Code'] == 'ppp'
+        assert result['initiationType.csv'][-1]['Title'] == 'Public Private Partnership'
+        assert result['initiationType.csv'][-1]['Description'].startswith('An open competitive bidding or tendering ')
+        assert 'Extension' not in result['initiationType.csv'][-1]
+
+        # Combines codelist additions and removals.
+        assert len(result['+partyRole.csv']) == 16
+        assert result['+partyRole.csv'][-1]['Code'] == 'enquirer'
+
+        # Doesn't log deprecated codes and logs ignored codelists.
+        assert len(caplog.records) == 1
+        assert caplog.records[-1].levelname == 'INFO'
+        assert caplog.records[-1].message == 'documentType.csv has the codes added by +documentType.csv, ignoring +documentType.csv'  # noqa
+
+
 def test_patched_codelists(caplog):
     with caplog.at_level(logging.INFO):
         builder = ProfileBuilder('1__1__3', OrderedDict([
@@ -144,6 +183,7 @@ def test_patched_codelists(caplog):
         assert len(result['awardCriteria.csv']) == 4
 
         # Sets Extension value and preserves other values.
+        assert len(result['awardCriteria.csv'][-1]) == 4
         assert result['awardCriteria.csv'][-1]['Code'] == 'ratedCriteria'
         assert result['awardCriteria.csv'][-1]['Title'] == 'Rated Criteria'
         assert result['awardCriteria.csv'][-1]['Description'].startswith('The award will be made to the qualified bid')
@@ -188,6 +228,7 @@ def test_standard_codelists(caplog):
         assert len(result['awardCriteria.csv']) == 4
 
         # Sets Extension value and preserves other values.
+        assert len(result['awardCriteria.csv'][-1]) == 4
         assert result['awardCriteria.csv'][-1]['Code'] == 'ratedCriteria'
         assert result['awardCriteria.csv'][-1]['Title'] == 'Rated Criteria'
         assert result['awardCriteria.csv'][-1]['Description'].startswith('The award will be made to the qualified bid')

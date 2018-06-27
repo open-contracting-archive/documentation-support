@@ -14,21 +14,29 @@ from ocdsextensionregistry import ExtensionRegistry
 logger = logging.getLogger('oc_dsdocumentationsupport')
 
 
-def _append_extension(name, content, extension_name):
+def _add_extension(rows, extension_name):
     """
-    Returns a list of rows from the content, adding an Extension column and removing deprecated codes.
+    Adds an Extension column to the rows.
     """
-    rows = []
-
-    for row in csv.DictReader(StringIO(content)):
-        if row.pop('Deprecated', None):
-            logger.info('... skipping deprecated code {} in {}'.format(row['Code'], name))
-            continue
-
+    for row in rows:
         row['Extension'] = extension_name
-        rows.append(row)
 
     return rows
+
+
+def _remove_deprecated(rows, name):
+    """
+    Removes any deprecated codes from the rows.
+    """
+    _rows = []
+
+    for row in rows:
+        if row.pop('Deprecated', None):
+            logger.info('... skipping deprecated code {} in {}'.format(row['Code'], name))
+        else:
+            _rows.append(row)
+
+    return _rows
 
 
 def _json_loads(data):
@@ -81,10 +89,10 @@ class ProfileBuilder:
         data = self.get_standard_file_contents('release-schema.json')
         return json_merge_patch.merge(_json_loads(data), self.release_schema_patch())
 
-    def codelist_patches(self):
+    def codelist_patches(self, add_extension=None, remove_deprecated=None):
         """
         Returns the rows of the codelist patches and new codelists within the extensions. Adds an Extension column and
-        removes deprecated codes.
+        removes deprecated codes if requested.
         """
         codelists = {}
         originals = {}
@@ -94,7 +102,11 @@ class ProfileBuilder:
             # guaranteed to offer a download URL, which is the only other way to get codelists.
             for name in json.loads(extension.remote('extension.json')).get('codelists', []):
                 content = extension.remote('codelists/' + name)
-                rows = _append_extension(name, content, extension.metadata['name']['en'])
+                rows = list(csv.DictReader(StringIO(content)))
+                if add_extension:
+                    rows = _add_extension(rows, extension.metadata['name']['en'])
+                if remove_deprecated:
+                    rows = _remove_deprecated(rows, name)
 
                 # New codelists and codelist replacements should be identical across extensions. Codelist additions and
                 # removals are merged across extensions.
@@ -141,7 +153,7 @@ class ProfileBuilder:
         """
         codelists = self.standard_codelists()
 
-        for name, rows in self.codelist_patches().items():
+        for name, rows in self.codelist_patches(add_extension=True, remove_deprecated=True).items():
             if name.startswith(('+', '-')):
                 basename = name[1:]
 
@@ -171,7 +183,10 @@ class ProfileBuilder:
         for path, content in self._file_cache.items():
             name = os.path.basename(path)
             if 'codelists' in path.split(os.sep) and name:
-                codelists[name] = _append_extension(name, content, 'OCDS Core')
+                rows = list(csv.DictReader(StringIO(content)))
+                rows = _add_extension(rows, 'OCDS Core')
+                rows = _remove_deprecated(rows, name)
+                codelists[name] = rows
 
         return codelists
 
