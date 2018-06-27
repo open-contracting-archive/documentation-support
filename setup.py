@@ -45,7 +45,7 @@ jsonschema_text = ocds_documentation_support.babel_extractors:jsonschema_extract
 
         # Utils
 
-        'ocdsextensionregistry>=0.0.2',
+        'ocdsextensionregistry>=0.0.3',
         'json-merge-patch',
         'transifex-client',
     ],
