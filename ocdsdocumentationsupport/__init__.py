@@ -16,9 +16,9 @@ def build_profile(basedir, standard_version, extension_versions, registry_base_u
     Pulls extensions into a profile.
 
     - Writes extensions' README.md files (docs/extensions/{id}.md)
-    - Merges extensions' JSON Schema Patch files for OCDS' release-schema.json (schema/profile/release-schema.json)
+    - Merges extensions' JSON Merge Patch files for OCDS' release-schema.json (schema/profile/release-schema.json)
     - Writes extensions' codelist files (schema/profile/codelists)
-    - Patches OCDS' release-schema.json with extensions' JSON Schema Patch files (schema/patched/release-schema.json)
+    - Patches OCDS' release-schema.json with extensions' JSON Merge Patch files (schema/patched/release-schema.json)
     - Patches OCDS' codelist files with extensions' codelist files (schema/patched/codelists)
 
     The profile's codelists exclude deprecated codes and add an Extension column.
@@ -61,7 +61,7 @@ def build_profile(basedir, standard_version, extension_versions, registry_base_u
         with open_file(os.path.join(basedir, '..', 'docs', 'extensions', '{}.md'.format(extension.id)), 'w') as f:
             f.write(extension.remote('README.md'))
 
-    # Write the JSON Schema Patch and JSON Schema files.
+    # Write the JSON Merge Patch and JSON Schema files.
     for directory, schema in directories_and_schema.items():
         write_json_file(schema, directory, 'release-schema.json')
 
