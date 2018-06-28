@@ -82,6 +82,24 @@ def test_patched_release_schema():
     assert 'buyer' not in result['properties']
 
 
+def test_standard_codelists():
+    builder = ProfileBuilder('1__1__3', OrderedDict())
+    result = builder.standard_codelists()
+
+    # Collects codelists.
+    assert len(result) == 19
+    assert [codelist.name for codelist in result] == standard_codelists
+
+    # Preserves content.
+    assert result[0].name == 'awardCriteria.csv'
+    assert len(result[0]) == 8
+    assert len(result[0][0]) == 4
+    assert result[0][0]['Code'] == 'priceOnly'
+    assert result[0][0]['Title'] == 'Price Only'
+    assert result[0][0]['Description'].startswith('The award will be made to the qualified bid with the lowest ')
+    assert result[0][0]['Deprecated'] == ''
+
+
 def test_extension_codelists(caplog):
     # Note: We can't yet test, using real data, whether an error is raised if a codelist replacement either doesn't
     # contain added codes, or contains removed codes. If we were to use test data, we could create a test registry
@@ -99,10 +117,11 @@ def test_extension_codelists(caplog):
             ('tariffs', 'master'),
         ]))
         result = builder.extension_codelists()
+        plus_party_role = next(codelist for codelist in result if codelist.name == '+partyRole.csv')
 
         # Collects codelists.
         assert len(result) == 9
-        assert list(result.keys()) == [
+        assert [codelist.name for codelist in result] == [
             '+milestoneType.csv',
             '+partyRole.csv',
             '-partyRole.csv',
@@ -112,15 +131,17 @@ def test_extension_codelists(caplog):
         ] + new_extension_codelists
 
         # Preserves content.
-        assert len(result['initiationType.csv']) == 1
-        assert len(result['initiationType.csv'][0]) == 3
-        assert result['initiationType.csv'][0]['Code'] == 'ppp'
-        assert result['initiationType.csv'][0]['Title'] == 'Public Private Partnership'
-        assert result['initiationType.csv'][0]['Description'].startswith('An open competitive bidding or tendering ')
+        assert result[0].name == '+milestoneType.csv'
+        assert len(result[0]) == 2
+        assert len(result[0][0]) == 4
+        assert result[0][0]['Code'] == 'procurement'
+        assert result[0][0]['Title'] == 'Procurement'
+        assert result[0][0]['Description'].startswith('Events taking place during the procurement which are not ')
+        assert result[0][0]['Source'] == ''
 
         # Combines codelist additions and removals.
-        assert len(result['+partyRole.csv']) == 16
-        assert result['+partyRole.csv'][-1]['Code'] == 'enquirer'
+        assert len(plus_party_role) == 16
+        assert plus_party_role[-1]['Code'] == 'enquirer'
 
         # Logs ignored codelists.
         assert len(caplog.records) == 1
@@ -136,49 +157,35 @@ def test_patched_codelists(caplog):
             ('tariffs', 'master'),
         ]))
         result = builder.patched_codelists()
+        party_role = next(codelist for codelist in result if codelist.name == 'partyRole.csv')
+        initiation_type = next(codelist for codelist in result if codelist.name == 'initiationType.csv')
 
         # Collects codelists.
         assert len(result) == 22
-        assert list(result.keys()) == standard_codelists + new_extension_codelists
+        assert [codelist.name for codelist in result] == standard_codelists + new_extension_codelists
 
         # Preserves content.
-        assert len(result['awardCriteria.csv']) == 8
-        assert len(result['awardCriteria.csv'][0]) == 4
-        assert result['awardCriteria.csv'][0]['Code'] == 'priceOnly'
-        assert result['awardCriteria.csv'][0]['Title'] == 'Price Only'
-        assert result['awardCriteria.csv'][0]['Description'].startswith('The award will be made to the qualified bid')
-        assert result['awardCriteria.csv'][0]['Deprecated'] == ''
+        assert result[0].name == 'awardCriteria.csv'
+        assert len(result[0]) == 8
+        assert len(result[0][0]) == 4
+        assert result[0][0]['Code'] == 'priceOnly'
+        assert result[0][0]['Title'] == 'Price Only'
+        assert result[0][0]['Description'].startswith('The award will be made to the qualified bid with the lowest ')
+        assert result[0][0]['Deprecated'] == ''
 
         # Adds codes.
-        assert any(row['Code'] == 'publicAuthority' for row in result['partyRole.csv'])
+        assert any(row['Code'] == 'publicAuthority' for row in party_role)
 
         # Removes codes.
-        assert not any(row['Code'] == 'buyer' for row in result['partyRole.csv'])
+        assert not any(row['Code'] == 'buyer' for row in party_role)
 
         # Replaces list.
-        assert all(row['Code'] == 'ppp' for row in result['initiationType.csv'])
+        assert all(row['Code'] == 'ppp' for row in initiation_type)
 
         # Logs ignored codelists.
         assert len(caplog.records) == 1
         assert caplog.records[-1].levelname == 'INFO'
         assert caplog.records[-1].message == 'documentType.csv has the codes added by +documentType.csv - ignoring +documentType.csv'  # noqa
-
-
-def test_standard_codelists():
-    builder = ProfileBuilder('1__1__3', OrderedDict())
-    result = builder.standard_codelists()
-
-    # Collects codelists.
-    assert len(result) == 19
-    assert list(result.keys()) == standard_codelists
-
-    # Preserves content.
-    assert len(result['awardCriteria.csv']) == 8
-    assert len(result['awardCriteria.csv'][0]) == 4
-    assert result['awardCriteria.csv'][0]['Code'] == 'priceOnly'
-    assert result['awardCriteria.csv'][0]['Title'] == 'Price Only'
-    assert result['awardCriteria.csv'][0]['Description'].startswith('The award will be made to the qualified bid with')
-    assert result['awardCriteria.csv'][0]['Deprecated'] == ''
 
 
 def test_get_standard_file_contents():

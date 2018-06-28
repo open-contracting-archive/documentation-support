@@ -43,6 +43,12 @@ def test_len():
     assert len(obj) == 4
 
 
+def test_repr():
+    obj = fixture()
+
+    assert repr(obj) == "Codelist(name='test.csv', rows=[CodelistCode(data=OrderedDict([('Code', 'open'), ('Title', 'Open'), ('Description', 'All interested suppliers may submit a tender.')]), extension_name='OCDS Core'), CodelistCode(data=OrderedDict([('Code', 'selective'), ('Title', 'Selective'), ('Description', 'Only qualified suppliers are invited to submit a tender.')]), extension_name='OCDS Core'), CodelistCode(data=OrderedDict([('Code', 'limited'), ('Title', 'Limited'), ('Description', 'The procuring entity contacts a number of suppliers of its choice.')]), extension_name='OCDS Core'), CodelistCode(data=OrderedDict([('Code', 'direct'), ('Title', 'Direct'), ('Description', 'The contract is awarded to a single supplier without competition.')]), extension_name='OCDS Core')])"  # noqa
+
+
 def test_extend():
     obj = fixture()
     obj.extend(csv.DictReader(StringIO('Code\nother')), 'Other')

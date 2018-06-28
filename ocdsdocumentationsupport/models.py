@@ -16,6 +16,9 @@ class Codelist:
     def __len__(self):
         return len(self.rows)
 
+    def __repr__(self):
+        return 'Codelist(name={}, rows={})'.format(repr(self.name), repr(self.rows))
+
     def extend(self, rows, extension_name):
         """
         Adds rows to the codelist.

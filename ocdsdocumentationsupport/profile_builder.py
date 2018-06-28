@@ -68,10 +68,9 @@ class ProfileBuilder:
 
     def standard_codelists(self):
         """
-        Returns the standard's codelists as a dictionary in which the key is the codelist's name and the value is a
-        Codelist object.
+        Returns the standard's codelists as Codelist objects.
         """
-        codelists = {}
+        codelists = OrderedDict()
 
         # Populate the file cache.
         self.get_standard_file_contents('release-schema.json')
@@ -83,12 +82,11 @@ class ProfileBuilder:
                 codelists[name] = Codelist(name)
                 codelists[name].extend(csv.DictReader(StringIO(content)), 'OCDS Core')
 
-        return codelists
+        return list(codelists.values())
 
     def extension_codelists(self):
         """
-        Returns the extensions' codelists as a dictionary in which the key is the codelist's name and the value is a
-        Codelist object.
+        Returns the extensions' codelists as Codelist objects.
 
         The extensions' codelists may be new, or may add codes to (+name.csv), remove codes from (-name.csv) or replace
         (name.csv) the codelists of the standard or other extensions.
@@ -96,7 +94,7 @@ class ProfileBuilder:
         Codelist additions and removals are merged across extensions. If new codelists or codelist replacements differ
         across extensions, an error is raised.
         """
-        codelists = {}
+        codelists = OrderedDict()
 
         # Keep the original content of codelists, to compare across extensions.
         originals = {}
@@ -126,33 +124,35 @@ class ProfileBuilder:
         #
         # If these expectations are not met, an error is raised. As such, profile authors only have to handle cases
         # where codelist modifications are inconsistent across extensions.
-        for name in list(codelists.keys()):
-            codelist = codelists[name]
+        for codelist in list(codelists.values()):
             basename = codelist.basename
             if codelist.patch and basename in codelists:
+                name = codelist.name
                 codes = codelists[basename].codes
                 if codelist.addend:
-                    for row in codelists[name]:
+                    for row in codelist:
                         code = row['Code']
                         assert code in codes, '{} added by {}, but not in {}'.format(code, name, basename)
                     logger.info('{0} has the codes added by {1} - ignoring {1}'.format(basename, name))
                 else:
-                    for row in codelists[name]:
+                    for row in codelist:
                         code = row['Code']
                         assert code not in codes, '{} removed by {}, but in {}'.format(code, name, basename)
                     logger.info('{0} has no codes removed by {1} - ignoring {1}'.format(basename, name))
                 del codelists[name]
 
-        return codelists
+        return list(codelists.values())
 
     def patched_codelists(self):
         """
-        Returns patched and new codelists as a dictionary in which the key is the codelist's name and the value is a
-        Codelist object.
+        Returns patched and new codelists as Codelist objects.
         """
-        codelists = self.standard_codelists()
+        codelists = OrderedDict()
 
-        for name, codelist in self.extension_codelists().items():
+        for codelist in self.standard_codelists():
+            codelists[codelist.name] = codelist
+
+        for codelist in self.extension_codelists():
             if codelist.patch:
                 basename = codelist.basename
                 if codelist.addend:
@@ -165,9 +165,9 @@ class ProfileBuilder:
                     codelists[basename].rows = [row for row in codelists[basename] if row['Code'] not in removed]
             else:
                 # Set or replace the rows.
-                codelists[name] = codelist
+                codelists[codelist.name] = codelist
 
-        return codelists
+        return list(codelists.values())
 
     def get_standard_file_contents(self, basename):
         """

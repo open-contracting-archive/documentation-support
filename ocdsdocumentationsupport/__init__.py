@@ -52,7 +52,7 @@ def build_profile(basedir, standard_version, extension_versions, registry_base_u
             f.write('\n')
 
     for directory, configuration in directories_and_codelists.items():
-        for name, codelist in configuration['codelists'].items():
+        for codelist in configuration['codelists']:
             if configuration['normalize']:
                 codelist.add_extension_column('Extension')
                 codelist.remove_deprecated_codes()
@@ -68,7 +68,7 @@ def build_profile(basedir, standard_version, extension_versions, registry_base_u
             else:
                 fieldnames = fieldnames.keys()
 
-            with open(os.path.join(basedir, directory, 'codelists', name), 'w') as f:
+            with open(os.path.join(basedir, directory, 'codelists', codelist.name), 'w') as f:
                 writer = csv.DictWriter(f, fieldnames=fieldnames, lineterminator='\n', extrasaction='ignore')
                 writer.writeheader()
                 writer.writerows(codelist)
