@@ -62,6 +62,12 @@ def test_len():
     assert len(obj) == 3
 
 
+def test_repr():
+    obj = fixture()
+
+    assert repr(obj) == "CodelistCode(data={'Code': 'tender', 'Title': 'Tender', 'Description': '…'}, extension_name='OCDS Core')"  # noqa
+
+
 def test_pop():
     obj = fixture()
 

@@ -29,18 +29,18 @@ def test_getitem():
     ]), 'OCDS Core')
 
 
-def test_len():
-    obj = fixture()
-
-    assert len(obj) == 4
-
-
 def test_iter():
     obj = fixture()
     for i, row in enumerate(obj):
         assert row == obj.rows[i]
 
     assert i == 3
+
+
+def test_len():
+    obj = fixture()
+
+    assert len(obj) == 4
 
 
 def test_extend():
