@@ -61,7 +61,7 @@ def build_profile(basedir, standard_version, extension_versions, registry_base_u
         with open_file(os.path.join(basedir, '..', 'docs', 'extensions', '{}.md'.format(extension.id)), 'w') as f:
             f.write(extension.remote('README.md'))
 
-    # Write the JSON Schema Patch and JSON Schema files.
+    # Write the JSON Merge Patch and JSON Schema files.
     for directory, schema in directories_and_schema.items():
         write_json_file(schema, directory, 'release-schema.json')
 
