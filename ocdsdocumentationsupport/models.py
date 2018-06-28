@@ -1,4 +1,4 @@
-from collections import Mapping
+from collections import Mapping, OrderedDict
 
 
 class Codelist:
@@ -45,6 +45,17 @@ class Codelist:
         Returns the codes in the codelist.
         """
         return [row['Code'] for row in self.rows]
+
+    @property
+    def fieldnames(self):
+        """
+        Returns all fieldnames used in any rows.
+        """
+        fieldnames = OrderedDict()
+        for row in self.rows:
+            for field in row:
+                fieldnames[field] = True
+        return list(fieldnames.keys())
 
     @property
     def basename(self):
