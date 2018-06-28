@@ -16,9 +16,9 @@ def build_profile(basedir, standard_version, extension_versions, registry_base_u
     Pulls extensions into a profile.
 
     - Writes extensions' README.md files (docs/extensions/{id}.md)
-    - Merges extensions' JSON Schema Patch files for OCDS' release-schema.json (schema/profile/release-schema.json)
+    - Merges extensions' JSON Merge Patch files for OCDS' release-schema.json (schema/profile/release-schema.json)
     - Writes extensions' codelist files (schema/profile/codelists)
-    - Patches OCDS' release-schema.json with extensions' JSON Schema Patch files (schema/patched/release-schema.json)
+    - Patches OCDS' release-schema.json with extensions' JSON Merge Patch files (schema/patched/release-schema.json)
     - Patches OCDS' codelist files with extensions' codelist files (schema/patched/codelists)
 
     The profile's codelists exclude deprecated codes and add an Extension column.
