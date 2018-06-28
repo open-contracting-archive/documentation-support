@@ -36,6 +36,7 @@ def build_profile(basedir, standard_version, extension_versions, registry_base_u
             writer.writerows(codelist)
 
     builder = ProfileBuilder(standard_version, extension_versions, registry_base_url)
+    extension_codelists = builder.extension_codelists()
 
     directories_and_schema = {
         'profile': builder.release_schema_patch(),
@@ -51,7 +52,7 @@ def build_profile(basedir, standard_version, extension_versions, registry_base_u
             json.dump(schema, f, indent=2, separators=(',', ': '))
             f.write('\n')
 
-    for codelist in builder.extension_codelists():
+    for codelist in extension_codelists:
         write_csv_file(os.path.join(basedir, 'profile'), codelist, codelist.fieldnames)
 
     for codelist in builder.patched_codelists():
@@ -60,3 +61,12 @@ def build_profile(basedir, standard_version, extension_versions, registry_base_u
         fieldnames = [fieldname for fieldname in codelist.fieldnames if fieldname in VALID_FIELDNAMES]
 
         write_csv_file(os.path.join(basedir, 'patched'), codelist, fieldnames)
+
+    with open(os.path.join(basedir, 'profile', 'extension.json')) as f:
+        metadata = json.load(f, object_pairs_hook=OrderedDict)
+
+    metadata['codelists'] = [codelist.name for codelist in extension_codelists]
+
+    with open(os.path.join(basedir, 'profile', 'extension.json'), 'w') as f:
+        json.dump(metadata, f, indent=2, separators=(',', ': '))
+        f.write('\n')
