@@ -79,5 +79,12 @@ def build_profile(basedir, standard_version, extension_versions, registry_base_u
     # Update the "codelists" field in extension.json.
     with open(os.path.join(basedir, 'profile', 'extension.json')) as f:
         metadata = json.load(f, object_pairs_hook=OrderedDict)
-    metadata['codelists'] = [codelist.name for codelist in extension_codelists]
+
+    codelists = [codelist.name for codelist in extension_codelists]
+
+    if codelists:
+        metadata['codelists'] = codelists
+    else:
+        metadata.pop('codelists', None)
+
     write_json_file(metadata, 'profile', 'extension.json')
