@@ -7,6 +7,7 @@ from ocdsdocumentationsupport.profile_builder import ProfileBuilder
 
 TRANSLATABLE_CODELIST_HEADERS = ('Title', 'Description', 'Extension')
 TRANSLATABLE_SCHEMA_KEYWORDS = ('title', 'description')
+VALID_FIELDNAMES = ('Code', 'Title', 'Description', 'Extension')
 
 
 def build_profile(basedir, standard_version, extension_versions, registry_base_url=None):
@@ -32,12 +33,12 @@ def build_profile(basedir, standard_version, extension_versions, registry_base_u
 
     directories_and_codelists = {
         'profile': {
-            'codelists': builder.codelist_patches(),
-            'include_fieldnames': None,
+            'codelists': builder.extension_codelists(),
+            'normalize': False,
         },
         'patched': {
             'codelists': builder.patched_codelists(),
-            'include_fieldnames': ('Code', 'Title', 'Description', 'Extension'),
+            'normalize': True,
         }
     }
 
@@ -51,20 +52,23 @@ def build_profile(basedir, standard_version, extension_versions, registry_base_u
             f.write('\n')
 
     for directory, configuration in directories_and_codelists.items():
-        for name, rows in configuration['codelists'].items():
+        for name, codelist in configuration['codelists'].items():
+            if configuration['normalize']:
+                codelist.add_extension_column('Extension')
+                codelist.remove_deprecated_codes()
+
             # Calculate the fieldnames that can be included.
             fieldnames = OrderedDict()
-            for row in rows:
+            for row in codelist:
                 for field in row:
                     fieldnames[field] = True
 
-            include_fieldnames = configuration['include_fieldnames']
-            if include_fieldnames:
-                fieldnames = [fieldname for fieldname in fieldnames if fieldname in include_fieldnames]
+            if configuration['normalize']:
+                fieldnames = [fieldname for fieldname in fieldnames if fieldname in VALID_FIELDNAMES]
             else:
                 fieldnames = fieldnames.keys()
 
             with open(os.path.join(basedir, directory, 'codelists', name), 'w') as f:
                 writer = csv.DictWriter(f, fieldnames=fieldnames, lineterminator='\n', extrasaction='ignore')
                 writer.writeheader()
-                writer.writerows(rows)
+                writer.writerows(codelist)
