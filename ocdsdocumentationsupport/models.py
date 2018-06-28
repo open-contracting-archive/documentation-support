@@ -9,12 +9,12 @@ class Codelist:
     def __getitem__(self, index):
         return self.rows[index]
 
-    def __len__(self):
-        return len(self.rows)
-
     def __iter__(self):
         for row in self.rows:
             yield row
+
+    def __len__(self):
+        return len(self.rows)
 
     def extend(self, rows, extension_name):
         """
