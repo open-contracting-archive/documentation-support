@@ -67,7 +67,8 @@ def translate_schema(domain, filenames, sourcedir, builddir, localedir, language
     logger.info('Translating schema to {} using "{}" domain, from {} to {}'.format(
         language, domain, sourcedir, builddir))
 
-    os.makedirs(builddir, exist_ok=True)
+    for name in filenames:
+        os.makedirs(os.path.dirname(os.path.join(builddir, name)), exist_ok=True)
 
     version = os.environ.get('TRAVIS_BRANCH', 'latest')
 
