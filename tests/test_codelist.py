@@ -80,6 +80,13 @@ def test_extend():
     ]
 
 
+def test_fieldnames():
+    obj = fixture()
+    obj.extend(csv.DictReader(StringIO('Code,Deprecated\nother,1.1')), 'Other')
+
+    assert obj.fieldnames == ['Code', 'Title', 'Description', 'Deprecated']
+
+
 def test_add_extension_column():
     obj = fixture()
     obj.extend(csv.DictReader(StringIO('Code\nother')), 'Other')
