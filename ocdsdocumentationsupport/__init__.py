@@ -24,22 +24,22 @@ def build_profile(basedir, standard_version, extension_versions, registry_base_u
 
     `basedir` is the profile's schema/ directory.
     """
+    def write_csv_file(basedir, codelist, fieldnames):
+        builddir = os.path.join(basedir, 'codelists')
+
+        if not os.path.exists(builddir):
+            os.makedirs(builddir)
+
+        with open(os.path.join(builddir, codelist.name), 'w') as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames, lineterminator='\n', extrasaction='ignore')
+            writer.writeheader()
+            writer.writerows(codelist)
+
     builder = ProfileBuilder(standard_version, extension_versions, registry_base_url)
 
     directories_and_schema = {
         'profile': builder.release_schema_patch(),
         'patched': builder.patched_release_schema(),
-    }
-
-    directories_and_codelists = {
-        'profile': {
-            'codelists': builder.extension_codelists(),
-            'normalize': False,
-        },
-        'patched': {
-            'codelists': builder.patched_codelists(),
-            'normalize': True,
-        }
     }
 
     for extension in builder.extensions():
@@ -51,24 +51,12 @@ def build_profile(basedir, standard_version, extension_versions, registry_base_u
             json.dump(schema, f, indent=2, separators=(',', ': '))
             f.write('\n')
 
-    for directory, configuration in directories_and_codelists.items():
-        for codelist in configuration['codelists']:
-            if configuration['normalize']:
-                codelist.add_extension_column('Extension')
-                codelist.remove_deprecated_codes()
+    for codelist in builder.extension_codelists():
+        write_csv_file(os.path.join(basedir, 'profile'), codelist, codelist.fieldnames)
 
-            # Calculate the fieldnames that can be included.
-            fieldnames = OrderedDict()
-            for row in codelist:
-                for field in row:
-                    fieldnames[field] = True
+    for codelist in builder.patched_codelists():
+        codelist.add_extension_column('Extension')
+        codelist.remove_deprecated_codes()
+        fieldnames = [fieldname for fieldname in codelist.fieldnames if fieldname in VALID_FIELDNAMES]
 
-            if configuration['normalize']:
-                fieldnames = [fieldname for fieldname in fieldnames if fieldname in VALID_FIELDNAMES]
-            else:
-                fieldnames = fieldnames.keys()
-
-            with open(os.path.join(basedir, directory, 'codelists', codelist.name), 'w') as f:
-                writer = csv.DictWriter(f, fieldnames=fieldnames, lineterminator='\n', extrasaction='ignore')
-                writer.writeheader()
-                writer.writerows(codelist)
+        write_csv_file(os.path.join(basedir, 'patched'), codelist, fieldnames)
