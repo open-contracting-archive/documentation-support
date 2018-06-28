@@ -11,32 +11,9 @@ import json_merge_patch
 import requests
 from ocdsextensionregistry import ExtensionRegistry
 
-logger = logging.getLogger('oc_dsdocumentationsupport')
+from ocdsdocumentationsupport.models import Codelist
 
-
-def _add_extension(rows, extension_name):
-    """
-    Adds an Extension column to the rows.
-    """
-    for row in rows:
-        row['Extension'] = extension_name
-
-    return rows
-
-
-def _remove_deprecated(rows, name):
-    """
-    Removes any deprecated codes from the rows.
-    """
-    _rows = []
-
-    for row in rows:
-        if row.pop('Deprecated', None):
-            logger.info('... skipping deprecated code {} in {}'.format(row['Code'], name))
-        else:
-            _rows.append(row)
-
-    return _rows
+logger = logging.getLogger('ocdsdocumentationsupport')
 
 
 def _json_loads(data):
@@ -89,104 +66,106 @@ class ProfileBuilder:
         data = self.get_standard_file_contents('release-schema.json')
         return json_merge_patch.merge(_json_loads(data), self.release_schema_patch())
 
-    def codelist_patches(self, add_extension=None, remove_deprecated=None):
+    def standard_codelists(self):
         """
-        Returns the rows of the codelist patches and new codelists within the extensions. Adds an Extension column and
-        removes deprecated codes if requested.
+        Returns the standard's codelists as a dictionary in which the key is the codelist's name and the value is a
+        Codelist object.
         """
         codelists = {}
+
+        # Populate the file cache.
+        self.get_standard_file_contents('release-schema.json')
+
+        # This method shouldn't need to know about `_file_cache`.
+        for path, content in self._file_cache.items():
+            name = os.path.basename(path)
+            if 'codelists' in path.split(os.sep) and name:
+                codelists[name] = Codelist(name)
+                codelists[name].extend(csv.DictReader(StringIO(content)), 'OCDS Core')
+
+        return codelists
+
+    def extension_codelists(self):
+        """
+        Returns the extensions' codelists as a dictionary in which the key is the codelist's name and the value is a
+        Codelist object.
+
+        The extensions' codelists may be new, or may add codes to (+name.csv), remove codes from (-name.csv) or replace
+        (name.csv) the codelists of the standard or other extensions.
+
+        Codelist additions and removals are merged across extensions. If new codelists or codelist replacements differ
+        across extensions, an error is raised.
+        """
+        codelists = {}
+
+        # Keep the original content of codelists, to compare across extensions.
         originals = {}
 
         for extension in self.extensions():
-            # standard-maintenance-scripts validates the "codelists" field in extension.json. An extension is not
-            # guaranteed to offer a download URL, which is the only other way to get codelists.
-            for name in json.loads(extension.remote('extension.json')).get('codelists', []):
+            # We use the "codelists" field in extension.json (which standard-maintenance-scripts validates). An
+            # extension is not guaranteed to offer a download URL, which is the only other way to get codelists.
+            for name in extension.metadata.get('codelists', []):
                 content = extension.remote('codelists/' + name)
-                rows = list(csv.DictReader(StringIO(content)))
-                if add_extension:
-                    rows = _add_extension(rows, extension.metadata['name']['en'])
-                if remove_deprecated:
-                    rows = _remove_deprecated(rows, name)
 
-                # New codelists and codelist replacements should be identical across extensions. Codelist additions and
-                # removals are merged across extensions.
-                if name in codelists:
-                    if name.startswith(('+', '-')):
-                        codelists[name].extend(rows)
-                    else:
-                        assert originals[name] == content, 'codelist {} is different across extensions'.format(name)
-                else:
-                    codelists[name] = rows
+                if name not in codelists:
+                    codelists[name] = Codelist(name)
                     originals[name] = content
+                elif not codelists[name].patch:
+                    assert originals[name] == content, 'codelist {} differs across extensions'.format(name)
+                    continue
 
-        # If a codelist replacement (name.csv) is consistent with additions (+name.csv) and removals (-name.csv), then
-        # the latter should be removed. This avoids profile authors having to instruct the profile builder to ignore
-        # specific codelists. In other words, the expectations are that:
+                codelists[name].extend(csv.DictReader(StringIO(content)), extension.metadata['name']['en'])
+
+        # If a codelist replacement (name.csv) is consistent with additions (+name.csv) and removals (-name.csv), the
+        # latter should be removed. In other words, the expectations are that:
         #
         # * A codelist replacement shouldn't omit added codes.
         # * A codelist replacement shouldn't include removed codes.
         # * If codes are added after a codelist is replaced, this should result in duplicate codes.
         # * If codes are removed after a codelist is replaced, this should result in no change.
         #
-        # If these expectations are not met, an error is raised.
+        # If these expectations are not met, an error is raised. As such, profile authors only have to handle cases
+        # where codelist modifications are inconsistent across extensions.
         for name in list(codelists.keys()):
-            if name.startswith(('+', '-')) and name[1:] in codelists:
-                codes = [row['Code'] for row in codelists[name[1:]]]
-                if name.startswith('+'):
+            codelist = codelists[name]
+            basename = codelist.basename
+            if codelist.patch and basename in codelists:
+                codes = codelists[basename].codes
+                if codelist.addend:
                     for row in codelists[name]:
                         code = row['Code']
-                        assert code in codes, '{} added by {}, but not in {}'.format(code, name, name[1:])
-                    logger.info('{0} has the codes added by {1}, ignoring {1}'.format(name[1:], name))
+                        assert code in codes, '{} added by {}, but not in {}'.format(code, name, basename)
+                    logger.info('{0} has the codes added by {1} - ignoring {1}'.format(basename, name))
                 else:
                     for row in codelists[name]:
                         code = row['Code']
-                        assert code not in codes, '{} removed by {}, but in {}'.format(code, name, name[1:])
-                    logger.info('{0} has no codes removed by {1}, ignoring {1}'.format(name[1:], name))
+                        assert code not in codes, '{} removed by {}, but in {}'.format(code, name, basename)
+                    logger.info('{0} has no codes removed by {1} - ignoring {1}'.format(basename, name))
                 del codelists[name]
 
         return codelists
 
     def patched_codelists(self):
         """
-        Returns the rows of the patched codelists and new codelists from the extensions. Adds an Extension column and
-        removes deprecated codes.
+        Returns patched and new codelists as a dictionary in which the key is the codelist's name and the value is a
+        Codelist object.
         """
         codelists = self.standard_codelists()
 
-        for name, rows in self.codelist_patches(add_extension=True, remove_deprecated=True).items():
-            if name.startswith(('+', '-')):
-                basename = name[1:]
-
-                if name.startswith('+'):
+        for name, codelist in self.extension_codelists().items():
+            if codelist.patch:
+                basename = codelist.basename
+                if codelist.addend:
                     # Add the rows.
-                    codelists[basename].extend(rows)
+                    codelists[basename].rows.extend(codelist.rows)
                     # Note that the rows may not all have the same columns, but DictWriter can handle this.
                 else:
                     # Remove the codes. Multiple extensions can remove the same codes.
-                    removed = [row['Code'] for row in rows]
-                    codelists[basename] = [row for row in codelists[basename] if row['Code'] not in removed]
+                    removed = codelist.codes
+                    codelists[basename].rows = [row for row in codelists[basename] if row['Code'] not in removed]
             else:
-                # Replace the rows.
-                codelists[name] = rows
-
-        return codelists
-
-    def standard_codelists(self):
-        """
-        Returns the rows of the codelists within the standard. Adds an Extension column and removes deprecated codes.
-        """
-        # Populate the file cache (though this method probably shouldn't have to know about `_file_cache`).
-        self.get_standard_file_contents('release-schema.json')
-
-        codelists = {}
-
-        for path, content in self._file_cache.items():
-            name = os.path.basename(path)
-            if 'codelists' in path.split(os.sep) and name:
-                rows = list(csv.DictReader(StringIO(content)))
-                rows = _add_extension(rows, 'OCDS Core')
-                rows = _remove_deprecated(rows, name)
-                codelists[name] = rows
+                # Set or replace the rows.
+                codelists[name] = codelist
 
         return codelists
 
