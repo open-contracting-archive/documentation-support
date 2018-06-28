@@ -1,3 +1,5 @@
+from collections import Mapping
+
 class Codelist:
     def __init__(self, name):
         self.name = name
@@ -71,7 +73,7 @@ class Codelist:
         return self.name.startswith('-')
 
 
-class CodelistCode:
+class CodelistCode(Mapping):
     def __init__(self, data, extension_name):
         self.data = data
         self.extension_name = extension_name
@@ -86,6 +88,9 @@ class CodelistCode:
 
     def __setitem__(self, key, value):
         self.data[key] = value
+
+    def __iter__(self):
+        return iter(self.data)
 
     def __len__(self):
         return len(self.data)
