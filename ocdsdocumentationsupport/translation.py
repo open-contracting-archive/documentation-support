@@ -27,8 +27,7 @@ def translate_codelists(domain, sourcedir, builddir, localedir, language):
     logger.info('Translating codelists to {} using "{}" domain, from {} to {}'.format(
         language, domain, sourcedir, builddir))
 
-    if not os.path.exists(builddir):
-        os.makedirs(builddir)
+    os.makedirs(builddir, exist_ok=True)
 
     translator = gettext.translation(domain, localedir, languages=[language], fallback=language == 'en')
 
@@ -68,8 +67,7 @@ def translate_schema(domain, filenames, sourcedir, builddir, localedir, language
     logger.info('Translating schema to {} using "{}" domain, from {} to {}'.format(
         language, domain, sourcedir, builddir))
 
-    if not os.path.exists(builddir):
-        os.makedirs(builddir)
+    os.makedirs(builddir, exist_ok=True)
 
     version = os.environ.get('TRAVIS_BRANCH', 'latest')
 
