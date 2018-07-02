@@ -18,11 +18,12 @@ def translate_codelists(domain, sourcedir, builddir, localedir, language):
     These files are typically referenced by `csv-table-no-translate` directives.
 
     Args:
-        domain: The gettext domain.
-        sourcedir: The path to the directory containing the codelist CSV files.
-        builddir: The path to the build directory.
-        localedir: The path to the `locale` directory.
-        language: A two-letter lowercase ISO369-1 code or BCP47 language tag.
+
+    * domain: The gettext domain.
+    * sourcedir: The path to the directory containing the codelist CSV files.
+    * builddir: The path to the build directory.
+    * localedir: The path to the `locale` directory.
+    * language: A two-letter lowercase ISO369-1 code or BCP47 language tag.
     """
     logger.info('Translating codelists to {} using "{}" domain, from {} to {}'.format(
         language, domain, sourcedir, builddir))
@@ -57,12 +58,13 @@ def translate_schema(domain, filenames, sourcedir, builddir, localedir, language
     These files are typically referenced by `jsonschema` directives.
 
     Args:
-        domain: The gettext domain.
-        filenames: A list of JSON Schema filenames to translate.
-        sourcedir: The path to the directory containing the JSON Schema files.
-        builddir: The path to the build directory.
-        localedir: The path to the `locale` directory.
-        language: A two-letter lowercase ISO369-1 code or BCP47 language tag.
+
+    *  domain: The gettext domain.
+    *  filenames: A list of JSON Schema filenames to translate.
+    *  sourcedir: The path to the directory containing the JSON Schema files.
+    *  builddir: The path to the build directory.
+    *  localedir: The path to the `locale` directory.
+    *  language: A two-letter lowercase ISO369-1 code or BCP47 language tag.
     """
     logger.info('Translating schema to {} using "{}" domain, from {} to {}'.format(
         language, domain, sourcedir, builddir))
