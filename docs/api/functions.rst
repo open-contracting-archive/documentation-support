@@ -1,0 +1,4 @@
+Functions
+=========
+
+.. automodule:: ocdsdocumentationsupport
