@@ -55,5 +55,10 @@ jsonschema_text = ocds_documentation_support.babel_extractors:jsonschema_extract
             'pytest',
             'pytest-cov',
         ],
+        'docs': [
+            'sphinx',
+            'sphinx-autobuild',
+            'sphinx_rtd_theme',
+        ],
     },
 )
