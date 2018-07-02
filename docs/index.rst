@@ -1,8 +1,3 @@
-.. OCDS Documentation Support documentation master file, created by
-   sphinx-quickstart on Mon Jul  2 13:38:42 2018.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 OCDS Documentation Support |release|
 ====================================
 
