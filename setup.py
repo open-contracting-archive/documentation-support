@@ -28,7 +28,6 @@ jsonschema_text = ocds_documentation_support.babel_extractors:jsonschema_extract
             'Jinja2==2.9.6',
               'MarkupSafe==1.0',
             'Pygments==2.2.0',
-            'requests==2.18.1',
             'snowballstemmer==1.2.1',
         # 'sphinxcontrib-jsonschema==0.9.3',  # use forked version
           'jsonpointer==1.10',
@@ -56,7 +55,7 @@ jsonschema_text = ocds_documentation_support.babel_extractors:jsonschema_extract
             'pytest-cov',
         ],
         'docs': [
-            'sphinx',
+            'Sphinx==1.5.1',
             'sphinx-autobuild',
             'sphinx_rtd_theme',
         ],
