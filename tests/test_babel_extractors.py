@@ -1,7 +1,7 @@
 import os
 from tempfile import TemporaryDirectory
 
-from ocdsdocumentationsupport.babel_extractors import codelists_extract, jsonschema_extract
+from ocdsdocumentationsupport.babel_extractors import extract_codelist, extract_schema
 
 codelist = b"""Code,Title,Description,Extension,Category
   foo  ,  bar  ,  baz  ,  bzz  ,  zzz  
@@ -36,8 +36,8 @@ def assert_result(filename, content, method, expected):
             assert list(method(f, None, None, None)) == expected
 
 
-def test_codelists_extract():
-    assert_result('test.csv', codelist, codelists_extract, [
+def test_extract_codelist():
+    assert_result('test.csv', codelist, extract_codelist, [
         (0, '', 'Code', ''),
         (0, '', 'Title', ''),
         (0, '', 'Description', ''),
@@ -55,8 +55,8 @@ def test_codelists_extract():
     ])
 
 
-def test_codelists_extract_currency():
-    assert_result('currency.csv', codelist, codelists_extract, [
+def test_extract_codelist_currency():
+    assert_result('currency.csv', codelist, extract_codelist, [
         (0, '', 'Code', ''),
         (0, '', 'Title', ''),
         (0, '', 'Description', ''),
@@ -65,8 +65,8 @@ def test_codelists_extract_currency():
     ])
 
 
-def test_jsonschema_extract():
-    assert_result('schema.json', schema, jsonschema_extract, [
+def test_extract_schema():
+    assert_result('schema.json', schema, extract_schema, [
         (1, '', 'foo', ['/title/oneOf/0/title']),
         (1, '', 'bar', ['/title/oneOf/0/description']),
         (1, '', 'baz', ['/title/oneOf/1/title']),

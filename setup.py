@@ -6,8 +6,8 @@ setup(  # noqa: E131
     packages=find_packages(),
     entry_points='''
 [babel.extractors]
-codelists_text = ocds_documentation_support.babel_extractors:codelists_extract
-jsonschema_text = ocds_documentation_support.babel_extractors:jsonschema_extract
+codelists_text = ocdsdocumentationsupport.babel_extractors:extract_codelist
+jsonschema_text = ocdsdocumentationsupport.babel_extractors:extract_schema
 ''',
     # The dependency trees are determined by `pipdeptree -fl`
     install_requires=[
