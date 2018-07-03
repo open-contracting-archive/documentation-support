@@ -34,7 +34,7 @@ def translate_codelists(domain, sourcedir, builddir, localedir, language):
 
     for file in glob.glob(os.path.join(sourcedir, '*.csv')):
         with open(file) as r, open(os.path.join(builddir, os.path.basename(file)), 'w') as w:
-            # This should roughly match the logic of the `codelists_extract` Babel extractor.
+            # This should roughly match the logic of the `extract_codelist` Babel extractor.
             reader = csv.DictReader(r)
             fieldnames = [translator.gettext(fieldname) for fieldname in reader.fieldnames]
 
@@ -74,7 +74,7 @@ def translate_schema(domain, filenames, sourcedir, builddir, localedir, language
 
     version = os.environ.get('TRAVIS_BRANCH', 'latest')
 
-    # This should roughly match the logic of the `jsonschema_extract` Babel extractor.
+    # This should roughly match the logic of the `extract_schema` Babel extractor.
     def translate_data(data):
         if isinstance(data, list):
             for item in data:

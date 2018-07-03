@@ -1,7 +1,5 @@
 """
-Babel extractors used in setup.py
-
-See http://babel.pocoo.org/en/latest/messages.html
+`Babel extractors <http://babel.pocoo.org/en/latest/messages.html>`__ for codelist CSV files and JSON Schema files.
 """
 
 import csv
@@ -12,7 +10,7 @@ from io import StringIO
 from ocdsdocumentationsupport import TRANSLATABLE_CODELIST_HEADERS, TRANSLATABLE_SCHEMA_KEYWORDS
 
 
-def codelists_extract(fileobj, keywords, comment_tags, options):
+def extract_codelist(fileobj, keywords, comment_tags, options):
     """
     Yields each header, and the Title, Description and Extension values of a codelist CSV file.
     """
@@ -31,7 +29,7 @@ def codelists_extract(fileobj, keywords, comment_tags, options):
                     yield row_number, '', value, [key]
 
 
-def jsonschema_extract(fileobj, keywords, comment_tags, options):
+def extract_schema(fileobj, keywords, comment_tags, options):
     """
     Yields the "title" and "description" values of a JSON Schema file.
     """
