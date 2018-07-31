@@ -15,7 +15,7 @@ jsonschema_text = ocdsdocumentationsupport.babel_extractors:extract_schema
 
         # It should be safe to track the versions in:
         # https://github.com/OpenDataServices/sphinx-base/blob/master/requirements.txt
-        'sphinx-intl==0.9.9',
+        'sphinx-intl<1',
           'Babel==2.4.0',
             'pytz==2017.2',
           'click==6.7',
