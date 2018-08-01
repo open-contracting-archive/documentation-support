@@ -24,11 +24,12 @@ def _json_loads(data):
 
 
 class ProfileBuilder:
-    def __init__(self, standard_version, extension_versions, registry_base_url=None):
+    def __init__(self, standard_tag, standard_version, extension_versions, registry_base_url=None):
         """
         Accepts an OCDS version and a dictionary of extension identifiers and versions, and initializes a reader of the
         extension registry.
         """
+        self.standard_tag = standard_tag
         self.standard_version = standard_version
         self.extension_versions = extension_versions
         self._file_cache = {}
@@ -63,7 +64,7 @@ class ProfileBuilder:
         """
         Returns the patched release schema.
         """
-        data = self.get_standard_file_contents('release-schema.json')
+        data = self.get_standard_file_contents('release-schema.json').replace('{{version}}', self.standard_version)
         return json_merge_patch.merge(_json_loads(data), self.release_schema_patch())
 
     def standard_codelists(self):
@@ -176,7 +177,7 @@ class ProfileBuilder:
         Downloads the given version of the standard, and caches the contents of files in the schema/ directory.
         """
         if not self._file_cache:
-            url = 'https://codeload.github.com/open-contracting/standard/zip/' + self.standard_version
+            url = 'https://codeload.github.com/open-contracting/standard/zip/' + self.standard_tag
             response = requests.get(url)
             response.raise_for_status()
             zipfile = ZipFile(BytesIO(response.content))

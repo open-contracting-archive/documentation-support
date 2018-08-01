@@ -36,7 +36,7 @@ new_extension_codelists = [
 
 
 def test_extensions():
-    builder = ProfileBuilder('1__1__3', OrderedDict([('charges', 'master'), ('location', 'v1.1.3')]))
+    builder = ProfileBuilder('1__1__3', '1.1', OrderedDict([('charges', 'master'), ('location', 'v1.1.3')]))
     result = list(builder.extensions())
 
     assert len(result) == 2
@@ -58,7 +58,7 @@ def test_extensions():
 
 def test_release_schema_patch():
     # Use the ppp extension to test null values.
-    builder = ProfileBuilder('1__1__3', OrderedDict([('ppp', 'v1.1.3'), ('location', 'v1.1.3')]))
+    builder = ProfileBuilder('1__1__3', '1.1', OrderedDict([('ppp', 'v1.1.3'), ('location', 'v1.1.3')]))
     result = builder.release_schema_patch()
 
     # Merges patches.
@@ -71,7 +71,7 @@ def test_release_schema_patch():
 
 def test_patched_release_schema():
     # Use the ppp extension to test null values.
-    builder = ProfileBuilder('1__1__3', OrderedDict([('ppp', 'v1.1.3'), ('location', 'v1.1.3')]))
+    builder = ProfileBuilder('1__1__3', '1.1', OrderedDict([('ppp', 'v1.1.3'), ('location', 'v1.1.3')]))
     result = builder.patched_release_schema()
 
     # Patches core.
@@ -81,9 +81,13 @@ def test_patched_release_schema():
     # Removes null'ed fields.
     assert 'buyer' not in result['properties']
 
+    # Replaces {{version}}.
+    assert 'standard.open-contracting.org/{{version}}/' not in json.dumps(result)
+    assert 'standard.open-contracting.org/1.1/' in json.dumps(result)
+
 
 def test_standard_codelists():
-    builder = ProfileBuilder('1__1__3', OrderedDict())
+    builder = ProfileBuilder('1__1__3', '1.1', OrderedDict())
     result = builder.standard_codelists()
 
     # Collects codelists.
@@ -110,7 +114,7 @@ def test_extension_codelists(caplog):
         # charges and tariffs both have chargePaidBy.csv, but the content is identical, so should not error. ppp has
         # documentType.csv and tariffs has +documentType.csv, but documentType.csv contains the codes added by
         # +documentType.csv, so should not error. ppp and enquiries both have +partyRole.csv.
-        builder = ProfileBuilder('1__1__3', OrderedDict([
+        builder = ProfileBuilder('1__1__3', '1.1', OrderedDict([
             ('ppp', 'v1.1.3'),
             ('enquiries', 'v1.1.3'),
             ('charges', 'master'),
@@ -151,7 +155,7 @@ def test_extension_codelists(caplog):
 
 def test_patched_codelists(caplog):
     with caplog.at_level(logging.INFO):
-        builder = ProfileBuilder('1__1__3', OrderedDict([
+        builder = ProfileBuilder('1__1__3', '1.1', OrderedDict([
             ('ppp', 'v1.1.3'),
             ('charges', 'master'),
             ('tariffs', 'master'),
@@ -189,7 +193,7 @@ def test_patched_codelists(caplog):
 
 
 def test_get_standard_file_contents():
-    builder = ProfileBuilder('1__1__3', OrderedDict())
+    builder = ProfileBuilder('1__1__3', '1.1', OrderedDict())
     data = builder.get_standard_file_contents('release-schema.json')
     # Repeat requests should return the same result.
     data = builder.get_standard_file_contents('release-schema.json')
