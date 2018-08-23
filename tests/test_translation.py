@@ -7,12 +7,12 @@ from tempfile import TemporaryDirectory
 from ocdsdocumentationsupport.translation import translate_codelists, translate_schema
 
 codelist = """Code,Title,Description
-open,  Open  ,All interested suppliers may submit a tender.
-selective,  Selective  ,Only qualified suppliers are invited to submit a tender.
-"""
+open,  Open  ,  All interested suppliers may submit a tender.  
+selective,  Selective  ,  Only qualified suppliers are invited to submit a tender.  
+"""  # noqa
 
 schema = """{
-  "title": "Schema for an Open Contracting Record package",
+  "title": "Schema for an Open Contracting Record package {{version}}",
   "description": "The record package contains a list of records along with some publishing…",
   "definitions": {
     "record": {
@@ -23,11 +23,11 @@ schema = """{
           "oneOf": [
             {
               "title": "  Linked releases  ",
-              "description": "A list of objects that identify the releases associated with this Open…"
+              "description": "  A list of objects that identify the releases associated with this Open…  "
             },
             {
               "title": "  Embedded releases  ",
-              "description": "A list of releases, with all the data. The releases MUST be sorted into date…"
+              "description": "  A list of releases, with all the data. The releases MUST be sorted into date…  "
             }
           ]
         }
@@ -88,7 +88,7 @@ def test_translate_schema(monkeypatch, caplog):
 
         def gettext(self, *args, **kwargs):
             return {
-                'Schema for an Open Contracting Record package': 'Esquema para un paquete de Registros de Contrataciones Abiertas',  # noqa
+                'Schema for an Open Contracting Record package {{version}}': 'Esquema para un paquete de Registros de Contrataciones Abiertas {{version}}',  # noqa
                 'The record package contains a list of records along with some publishing…':  'El paquete de registros contiene una lista de registros junto con algunos…',  # noqa
                 'Releases': 'Entregas',
                 'An array of linking identifiers or releases': 'Una matriz de enlaces a identificadores o entregas',
@@ -108,7 +108,7 @@ def test_translate_schema(monkeypatch, caplog):
             f.write(schema)
 
         with TemporaryDirectory() as builddir:
-            translate_schema('schema', ['record-package-schema.json'], sourcedir, builddir, '', 'es')
+            translate_schema('schema', ['record-package-schema.json'], sourcedir, builddir, '', 'es', '1.1')
 
             with open(os.path.join(builddir, 'record-package-schema.json')) as f:
                 data = json.load(f)
@@ -116,7 +116,7 @@ def test_translate_schema(monkeypatch, caplog):
             assert not os.path.exists(os.path.join(builddir, 'untranslated.json'))
 
             assert data == {
-              "title": "Esquema para un paquete de Registros de Contrataciones Abiertas",
+              "title": "Esquema para un paquete de Registros de Contrataciones Abiertas 1.1",
               "description": "El paquete de registros contiene una lista de registros junto con algunos…",
               "definitions": {
                 "record": {
