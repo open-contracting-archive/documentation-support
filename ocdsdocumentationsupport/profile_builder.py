@@ -24,13 +24,12 @@ def _json_loads(data):
 
 
 class ProfileBuilder:
-    def __init__(self, standard_tag, standard_version, extension_versions, registry_base_url=None):
+    def __init__(self, standard_tag, extension_versions, registry_base_url=None):
         """
         Accepts an OCDS version and a dictionary of extension identifiers and versions, and initializes a reader of the
         extension registry.
         """
         self.standard_tag = standard_tag
-        self.standard_version = standard_version
         self.extension_versions = extension_versions
         self._file_cache = {}
 
@@ -64,7 +63,7 @@ class ProfileBuilder:
         """
         Returns the patched release schema.
         """
-        data = self.get_standard_file_contents('release-schema.json').replace('{{version}}', self.standard_version)
+        data = self.get_standard_file_contents('release-schema.json')
         return json_merge_patch.merge(_json_loads(data), self.release_schema_patch())
 
     def standard_codelists(self):

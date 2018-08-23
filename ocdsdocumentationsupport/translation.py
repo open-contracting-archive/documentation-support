@@ -51,7 +51,7 @@ def translate_codelists(domain, sourcedir, builddir, localedir, language):
                 writer.writerow(new_row)
 
 
-def translate_schema(domain, filenames, sourcedir, builddir, localedir, language):
+def translate_schema(domain, filenames, sourcedir, builddir, localedir, language, ocds_version):
     """
     Writes files, translating the "title" and "description" values of JSON Schema files.
 
@@ -65,14 +65,13 @@ def translate_schema(domain, filenames, sourcedir, builddir, localedir, language
     *  builddir: The path to the build directory.
     *  localedir: The path to the `locale` directory.
     *  language: A two-letter lowercase ISO369-1 code or BCP47 language tag.
+    *  ocds_version: The minor version of OCDS to substitute into URL patterns.
     """
     logger.info('Translating schema to {} using "{}" domain, from {} to {}'.format(
         language, domain, sourcedir, builddir))
 
     for name in filenames:
         os.makedirs(os.path.dirname(os.path.join(builddir, name)), exist_ok=True)
-
-    version = os.environ.get('TRAVIS_BRANCH', 'latest')
 
     # This should roughly match the logic of the `extract_schema` Babel extractor.
     def translate_data(data):
@@ -84,7 +83,7 @@ def translate_schema(domain, filenames, sourcedir, builddir, localedir, language
                 if isinstance(value, str):
                     value = value.strip()
                     if key in TRANSLATABLE_SCHEMA_KEYWORDS and value:
-                        data[key] = translator.gettext(value).replace('{{version}}', version).replace('{{lang}}', language)  # noqa: E501
+                        data[key] = translator.gettext(value).replace('{{version}}', ocds_version).replace('{{lang}}', language)  # noqa: E501
                 translate_data(value)
 
     translator = gettext.translation(domain, localedir, languages=[language], fallback=language == 'en')
