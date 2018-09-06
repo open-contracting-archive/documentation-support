@@ -11,7 +11,7 @@ TRANSLATABLE_SCHEMA_KEYWORDS = ('title', 'description')
 VALID_FIELDNAMES = ('Code', 'Title', 'Description', 'Extension')
 
 
-def build_profile(basedir, standard_tag, extension_versions, registry_base_url=None):
+def build_profile(basedir, standard_tag, extension_versions, registry_base_url=None, schema_deploy_url=None):
     """
     Pulls extensions into a profile.
 
@@ -50,7 +50,7 @@ def build_profile(basedir, standard_tag, extension_versions, registry_base_url=N
             writer.writeheader()
             writer.writerows(codelist)
 
-    builder = ProfileBuilder(standard_tag, extension_versions, registry_base_url)
+    builder = ProfileBuilder(standard_tag, extension_versions, registry_base_url, schema_deploy_url)
     extension_codelists = builder.extension_codelists()
     directories_and_schema = {
         'profile': builder.release_schema_patch(),
