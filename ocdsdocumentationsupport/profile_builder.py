@@ -74,6 +74,18 @@ class ProfileBuilder:
 
         return patched
 
+    def release_package_schema(self):
+        """
+        Returns the release package schema. Does not currently patch it.
+        """
+        data = _json_loads(self.get_standard_file_contents('release-package-schema.json'))
+
+        if self.schema_deploy_url:
+            data['id'] = urljoin(self.schema_deploy_url, 'release-package-schema.json')
+            data['properties']['releases']['items']['$ref'] = urljoin(self.schema_deploy_url, 'release-schema.json')
+
+        return data
+
     def standard_codelists(self):
         """
         Returns the standard's codelists as Codelist objects.

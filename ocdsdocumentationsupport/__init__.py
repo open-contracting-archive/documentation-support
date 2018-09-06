@@ -53,8 +53,11 @@ def build_profile(basedir, standard_tag, extension_versions, registry_base_url=N
     builder = ProfileBuilder(standard_tag, extension_versions, registry_base_url, schema_deploy_url)
     extension_codelists = builder.extension_codelists()
     directories_and_schema = {
-        'profile': builder.release_schema_patch(),
-        'patched': builder.patched_release_schema(),
+        'profile': {"release-schema.json": builder.release_schema_patch()},
+        'patched': {
+            "release-schema.json": builder.patched_release_schema(),
+            "release-package-schema.json": builder.release_package_schema()
+        }
     }
 
     # Write the documentation files.
@@ -63,8 +66,9 @@ def build_profile(basedir, standard_tag, extension_versions, registry_base_url=N
             f.write(extension.remote('README.md'))
 
     # Write the JSON Merge Patch and JSON Schema files.
-    for directory, schema in directories_and_schema.items():
-        write_json_file(schema, directory, 'release-schema.json')
+    for directory, schemas in directories_and_schema.items():
+        for filename, schema in schemas.items():
+            write_json_file(schema, directory, filename)
 
     # Write the extensions' codelists.
     for codelist in extension_codelists:
