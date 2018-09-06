@@ -11,7 +11,7 @@ TRANSLATABLE_SCHEMA_KEYWORDS = ('title', 'description')
 VALID_FIELDNAMES = ('Code', 'Title', 'Description', 'Extension')
 
 
-def build_profile(basedir, standard_tag, extension_versions, registry_base_url=None, schema_deploy_url=None):
+def build_profile(basedir, standard_tag, extension_versions, registry_base_url=None, schema_base_url=None):
     """
     Pulls extensions into a profile.
 
@@ -50,13 +50,15 @@ def build_profile(basedir, standard_tag, extension_versions, registry_base_url=N
             writer.writeheader()
             writer.writerows(codelist)
 
-    builder = ProfileBuilder(standard_tag, extension_versions, registry_base_url, schema_deploy_url)
+    builder = ProfileBuilder(standard_tag, extension_versions, registry_base_url, schema_base_url)
     extension_codelists = builder.extension_codelists()
-    directories_and_schema = {
-        'profile': {"release-schema.json": builder.release_schema_patch()},
+    directories_and_schemas = {
+        'profile': {
+            'release-schema.json': builder.release_schema_patch(),
+        },
         'patched': {
-            "release-schema.json": builder.patched_release_schema(),
-            "release-package-schema.json": builder.release_package_schema()
+            'release-schema.json': builder.patched_release_schema(),
+            'release-package-schema.json': builder.release_package_schema(),
         }
     }
 
@@ -66,7 +68,7 @@ def build_profile(basedir, standard_tag, extension_versions, registry_base_url=N
             f.write(extension.remote('README.md'))
 
     # Write the JSON Merge Patch and JSON Schema files.
-    for directory, schemas in directories_and_schema.items():
+    for directory, schemas in directories_and_schemas.items():
         for filename, schema in schemas.items():
             write_json_file(schema, directory, filename)
 

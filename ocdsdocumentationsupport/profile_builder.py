@@ -25,7 +25,7 @@ def _json_loads(data):
 
 
 class ProfileBuilder:
-    def __init__(self, standard_tag, extension_versions, registry_base_url=None, schema_deploy_url=None):
+    def __init__(self, standard_tag, extension_versions, registry_base_url=None, schema_base_url=None):
         """
         Accepts an OCDS version and a dictionary of extension identifiers and versions, and initializes a reader of the
         extension registry.
@@ -33,9 +33,7 @@ class ProfileBuilder:
         self.standard_tag = standard_tag
         self.extension_versions = extension_versions
         self._file_cache = {}
-
-        # Allows specifiying where the released patched schema will be deployed, used to set 'id' field in the schema.
-        self.schema_deploy_url = schema_deploy_url
+        self.schema_base_url = schema_base_url
 
         # Allows setting the registry URL to e.g. a pull request, when working on a profile.
         if not registry_base_url:
@@ -67,22 +65,22 @@ class ProfileBuilder:
         """
         Returns the patched release schema.
         """
-        data = self.get_standard_file_contents('release-schema.json')
-        patched = json_merge_patch.merge(_json_loads(data), self.release_schema_patch())
-        if self.schema_deploy_url:
-            patched['id'] = urljoin(self.schema_deploy_url, 'release-schema.json')
+        content = self.get_standard_file_contents('release-schema.json')
+        patched = json_merge_patch.merge(_json_loads(content), self.release_schema_patch())
+        if self.schema_base_url:
+            patched['id'] = urljoin(self.schema_base_url, 'release-schema.json')
 
         return patched
 
     def release_package_schema(self):
         """
-        Returns the release package schema. Does not currently patch it.
+        Returns a release package schema. If `schema_base_url` was provided, updates schema URLs.
         """
         data = _json_loads(self.get_standard_file_contents('release-package-schema.json'))
 
-        if self.schema_deploy_url:
-            data['id'] = urljoin(self.schema_deploy_url, 'release-package-schema.json')
-            data['properties']['releases']['items']['$ref'] = urljoin(self.schema_deploy_url, 'release-schema.json')
+        if self.schema_base_url:
+            data['id'] = urljoin(self.schema_base_url, 'release-package-schema.json')
+            data['properties']['releases']['items']['$ref'] = urljoin(self.schema_base_url, 'release-schema.json')
 
         return data
 
